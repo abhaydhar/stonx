@@ -1,0 +1,50 @@
+# Core Dependencies
+python-dotenv==1.0.0
+pydantic==2.7.0
+pydantic-settings==2.2.1
+
+# Data & Analysis
+pandas==2.2.0
+numpy==1.26.0
+yfinance==0.2.37
+nsepy==0.9.1
+
+# Technical Analysis
+pandas-ta==0.3.14b
+TA-Lib==0.4.28
+
+# Agent Framework
+crewai==0.28.0
+langchain==0.1.20
+langchain-anthropic==0.1.11
+anthropic==0.25.0
+
+# Database
+sqlalchemy==2.0.28
+psycopg2-binary==2.9.9
+
+# Dashboard & Visualization
+streamlit==1.32.0
+plotly==5.20.0
+
+# Alerting
+apprise==1.7.4
+python-telegram-bot==20.8
+
+# Scheduling
+apscheduler==3.10.4
+
+# Testing
+pytest==8.1.1
+pytest-mock==3.12.0
+
+# Logging
+structlog==24.1.0
+
+# Backtesting
+backtesting==0.3.3
+vectorbt==0.26.1
+
+# Utilities
+requests==2.31.0
+beautifulsoup4==4.12.3

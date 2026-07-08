@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from docx import Document; doc = Document\\('StockScanner PRD v1.docx'\\); print\\('\\\\n'.join\\([p.text for p in doc.paragraphs]\\)\\)\")",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(python validate_models.py)"
+    ]
+  }
+}
