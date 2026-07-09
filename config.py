@@ -223,6 +223,21 @@ class ScannerConfig(BaseSettings):
         description="Directory for fundamental data CSVs"
     )
 
+    NSE_UNIVERSE_INDEX: Optional[str] = Field(
+        default=None,
+        description=(
+            "If set (e.g. 'nifty50', 'nifty200', 'nifty500'), fetch a live NSE "
+            "index constituent list instead of the static universe CSV. Leave "
+            "unset to use data/universe/nse_universe.csv (offline-friendly)."
+        )
+    )
+
+    NSE_UNIVERSE_CACHE_TTL_HOURS: float = Field(
+        default=24.0,
+        description="Hours to cache a fetched live NSE universe list before refreshing",
+        ge=1.0
+    )
+
     # ==================== Logging ====================
     LOG_LEVEL: str = Field(
         default="INFO",

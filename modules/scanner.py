@@ -59,10 +59,20 @@ def load_scanner_config() -> object:
 def build_ingestion_from_config(
     config: object,
     provider: Optional[object] = None,
+    universe_provider: Optional[object] = None,
 ) -> DataIngestion:
+    universe_index = _cfg(config, "NSE_UNIVERSE_INDEX", None)
+    if universe_provider is None and universe_index:
+        from modules.ingest import NSEArchiveUniverseProvider
+
+        universe_provider = NSEArchiveUniverseProvider()
+
     return DataIngestion(
         cache_dir=_cfg(config, "DATA_CACHE_DIR", "./data/cache"),
         provider=provider,
+        universe_provider=universe_provider,
+        universe_index=universe_index,
+        universe_cache_ttl_hours=_cfg(config, "NSE_UNIVERSE_CACHE_TTL_HOURS", 24.0),
     )
 
 
