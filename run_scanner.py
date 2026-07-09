@@ -11,6 +11,7 @@ Environment:
 """
 
 import argparse
+import csv
 import json
 import logging
 import os
@@ -123,6 +124,57 @@ def dry_run():
 
 
 # ---------------------------------------------------------------------------
+# Deterministic scan without LLM
+# ---------------------------------------------------------------------------
+
+def deterministic_scan(
+    symbols=None,
+    limit=None,
+    market_regime=None,
+    output_dir=None,
+):
+    """Run the deterministic scanner service and write JSON/CSV outputs."""
+    logger.info("=" * 60)
+    logger.info("DETERMINISTIC SCAN - no LLM")
+    logger.info("=" * 60)
+
+    from modules.scanner import DeterministicScanner, write_scan_outputs
+
+    scanner = DeterministicScanner()
+    output = scanner.run(
+        symbols=symbols,
+        limit=limit,
+        market_regime=market_regime,
+    )
+    paths = write_scan_outputs(output, output_dir or PROJECT_ROOT / "data")
+
+    logger.info(
+        "Deterministic scan complete: %s approved, %s rejected",
+        output.funnel_counts["approved"],
+        output.funnel_counts["rejected"],
+    )
+    logger.info("JSON saved to %s", paths["json"])
+    logger.info("CSV saved to %s", paths["csv"])
+
+    print("\nTOP DETERMINISTIC SETUPS\n" + "-" * 40)
+    for candidate in output.candidates[:10]:
+        print(
+            f"#{candidate.rank} {candidate.symbol} | "
+            f"Pattern: {candidate.pattern} | "
+            f"R:R: {candidate.rr_ratio}x | "
+            f"Entry: {candidate.entry} | "
+            f"Stop: {candidate.stop} | "
+            f"Target: {candidate.target}"
+        )
+    if not output.candidates:
+        print("No approved setups.")
+    print(f"\nMarket regime: {output.market_regime.regime}")
+    print(f"Funnel counts: {output.funnel_counts}")
+
+    return output
+
+
+# ---------------------------------------------------------------------------
 # Full scan via CrewAI
 # ---------------------------------------------------------------------------
 
@@ -169,12 +221,25 @@ def full_scan(verbose: bool = False):
                 print(f"   → {setup['rationale']}")
         print()
 
-        # Save results to JSON
+        # Save results to JSON and CSV
         results_path = PROJECT_ROOT / "data" / f"scan_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         results_path.parent.mkdir(exist_ok=True)
         with open(results_path, "w") as f:
             json.dump({"timestamp": datetime.now().isoformat(), "setups": setups}, f, indent=2)
         logger.info(f"Results saved to {results_path}")
+
+        csv_path = results_path.with_suffix(".csv")
+        fieldnames = [
+            "rank", "symbol", "pattern", "confidence", "entry", "stop",
+            "target", "rr_ratio", "position_shares", "position_inr",
+            "capital_at_risk_inr", "rationale",
+        ]
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+            writer.writeheader()
+            for setup in setups:
+                writer.writerow(setup)
+        logger.info(f"CSV saved to {csv_path}")
     else:
         logger.info("No trade setups found in today's scan.")
         print("\n⚠  No setups found today.  Raw agent output:\n")
@@ -201,9 +266,43 @@ def main():
         action="store_true",
         help="Enable full CrewAI agent trace",
     )
+    parser.add_argument(
+        "--deterministic",
+        action="store_true",
+        help="Run deterministic scanner service without LLM",
+    )
+    parser.add_argument(
+        "--symbols",
+        help="Comma-separated symbols for deterministic scan (default: configured universe)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Limit number of symbols for deterministic scan",
+    )
+    parser.add_argument(
+        "--market-regime",
+        choices=["bull", "bear"],
+        help="Override market regime for deterministic scan",
+    )
+    parser.add_argument(
+        "--output-dir",
+        help="Directory for deterministic JSON/CSV outputs",
+    )
     args = parser.parse_args()
 
-    if args.dry_run:
+    if args.deterministic:
+        symbols = None
+        if args.symbols:
+            symbols = [item.strip() for item in args.symbols.split(",") if item.strip()]
+        deterministic_scan(
+            symbols=symbols,
+            limit=args.limit,
+            market_regime=args.market_regime,
+            output_dir=args.output_dir,
+        )
+        sys.exit(0)
+    elif args.dry_run:
         success = dry_run()
         sys.exit(0 if success else 1)
     else:

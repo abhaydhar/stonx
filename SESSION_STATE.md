@@ -1,329 +1,175 @@
 # StockScanner Build Session State
 
-**Last Updated**: 2026-07-08  
-**Build Phase**: MVP Phase 1 - Core Pipeline Foundation  
-**Progress**: 30% (Day 1 of estimated 18-20 day build)
+**Last Updated**: 2026-07-08 (Build orchestration session)
+**Build Phase**: Waves 0–1 COMPLETE and verified. Building Waves 2–8 (agents, backtest, journal, dashboard, alerts, learning).
+**Overall Progress**: ~35% of full PRD v2 MVP (deterministic spine done; multi-agent + persistence + UI in progress)
+
+> This file is the single source of truth for resuming on another machine.
+> It is updated continuously as work lands. Read this first, then
+> `PRD_v2_agent_task_breakdown.md` (waves/tasks) and `PRD_v2_code_gap_audit.md`.
 
 ---
 
-## 🎯 Current Objective
+## 🖥️ Environment Reproduction (DO THIS FIRST on a new machine)
 
-Building **Scanner Agent** (proof of concept) + **CrewAI orchestration template** to demonstrate multi-agent architecture working end-to-end.
+Python **3.12** required (`.python-version` = 3.12.13).
 
----
-
-## ✅ Completed Work
-
-### 1. Requirements & Architecture (100% Complete)
-- [PRD_v2_with_recommendations.md](PRD_v2_with_recommendations.md) - Comprehensive PRD with multi-agent architecture
-- **Key Decision**: Multi-agent architecture moved to MVP (not post-MVP) to avoid costly refactor
-- **Architecture**: 5 agents (Scanner, Research, Risk, Execution, Learning) orchestrated via CrewAI
-
-### 2. Project Setup (80% Complete)
-
-#### Files Created:
-- [requirements.txt](requirements.txt) - All dependencies (CrewAI, LangChain, pandas, yfinance, etc.)
-- [config.py](config.py) - Pydantic-based type-safe configuration
-- [modules/__init__.py](modules/__init__.py) - Module initialization
-- [modules/ingest.py](modules/ingest.py) - Data ingestion with caching
-
-#### Folder Structure:
-```
-stonx/
-├── agents/           [TO CREATE]
-├── modules/          [PARTIAL - has __init__.py, ingest.py]
-├── tools/            [TO CREATE]
-├── orchestrator/     [TO CREATE]
-├── data/
-│   ├── cache/        [TO CREATE]
-│   └── fundamentals/ [TO CREATE]
-├── logs/             [TO CREATE]
-└── tests/            [TO CREATE]
+```powershell
+# From repo root C:\abhay\stonx
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt   # full set
+Copy-Item .env.example .env                  # fill ANTHROPIC_API_KEY only for LLM agent runs
 ```
 
-### 3. Configuration (100% Complete)
-- **Capital Management**: ₹10L default, 1% risk per trade, 5% portfolio heat limit
-- **Technical Parameters**: 100-day lookback, 8% consolidation range, 1.5x volume spike
-- **Agent Models**: Haiku (Scanner/Execution), Sonnet (Research/Risk), Opus (Learning)
-- **API Keys**: Configured via .env file (ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN)
+### Test command (canonical)
 
-### 4. Data Ingestion Module (100% Complete)
-**File**: [modules/ingest.py](modules/ingest.py)
-- ✅ Fetches OHLCV data via yfinance
-- ✅ Caches data as Parquet files (1-day TTL)
-- ✅ Handles missing data (skips if >10% gaps)
-- ✅ NSE universe: 30 liquid stocks for MVP (expandable)
-- ✅ Placeholder for fundamental data (Screener.in integration pending)
-
----
-
-## 🚧 In Progress
-
-### Current Task: Building Core Modules for Scanner Agent
-
-**Next 4 modules to create**:
-1. **modules/patterns.py** - Technical pattern detection (consolidation, higher lows, compression)
-2. **modules/volume.py** - Volume profile analysis (HVN/LVN calculation)
-3. **modules/risk.py** - R:R gate + position sizing
-4. **modules/fundamental.py** - Fundamental filters (market cap, debt, promoter holding)
-
----
-
-## 📋 Remaining Tasks (In Order)
-
-### Phase 1: Core Modules (Estimated: 3 days)
-- [ ] Create `modules/fundamental.py` - Fundamental screening logic
-- [ ] Create `modules/patterns.py` - 3 pattern detectors (consolidation, higher lows, compression)
-- [ ] Create `modules/volume.py` - Volume profile HVN/LVN calculator
-- [ ] Create `modules/risk.py` - R:R gate + position sizing
-
-### Phase 2: LangChain Tools (Estimated: 1 day)
-- [ ] Create `tools/__init__.py`
-- [ ] Create `tools/data_tools.py` - Wrap modules as LangChain tools
-- [ ] Create `tools/analysis_tools.py` - Volatility, correlation tools
-
-### Phase 3: Scanner Agent (Estimated: 1 day)
-- [ ] Create `agents/__init__.py`
-- [ ] Create `agents/base.py` - BaseAgent class
-- [ ] Create `agents/scanner_agent.py` - Main Scanner Agent implementation
-
-### Phase 4: CrewAI Orchestration (Estimated: 1 day)
-- [ ] Create `orchestrator/__init__.py`
-- [ ] Create `orchestrator/crew.py` - CrewAI setup with Scanner Agent
-- [ ] Create `run_scanner.py` - Entry point script
-
-### Phase 5: Testing & Validation (Estimated: 1 day)
-- [ ] Test data ingestion on 30 NSE stocks
-- [ ] Test pattern detection on sample data
-- [ ] Test end-to-end Scanner Agent execution
-- [ ] Create `tests/test_scanner_agent.py`
-
----
-
-## 🏗️ Architecture Decisions Log
-
-### Decision 1: Multi-Agent from MVP (Priority Change)
-**Date**: 2026-07-08  
-**Rationale**: Avoid costly refactor later. Agent-based architecture provides:
-- Natural separation of concerns
-- Individual agent testability
-- Scalability (add agents without touching core)
-- Explainability (each agent's reasoning visible)
-
-### Decision 2: CrewAI over LangGraph
-**Date**: 2026-07-08  
-**Rationale**: CrewAI simpler for MVP, provides:
-- Higher-level abstractions (Agent, Task, Crew)
-- Built-in task dependencies
-- Less boilerplate than LangGraph
-- Can migrate to LangGraph later if needed
-
-### Decision 3: Parquet for Caching (not SQLite)
-**Date**: 2026-07-08  
-**Rationale**: 
-- Faster read/write for time-series data
-- Better compression
-- Pandas-native format
-- SQLite reserved for trade journal (transactional data)
-
-### Decision 4: Start with 30 Liquid Stocks (not 5000)
-**Date**: 2026-07-08  
-**Rationale**: 
-- MVP validation faster with smaller universe
-- 30 liquid stocks = ~90% of NSE trading volume
-- Easily expandable to full universe later
-- Reduces API rate limit issues
-
----
-
-## 🔑 Key Technical Details
-
-### Data Flow (Current Implementation)
-```
-DataIngestion.fetch_ohlcv(symbol)
-  ↓
-1. Check cache (Parquet file < 1 day old)
-  ↓ (cache miss)
-2. Fetch from yfinance
-  ↓
-3. Validate (skip if >10% missing data)
-  ↓
-4. Save to cache (Parquet format)
-  ↓
-5. Return DataFrame
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-### Pattern Detection Logic (To Implement)
+NOTE (sandbox only): in the build sandbox the default Windows temp dir is not
+writable by pytest, so the build used:
+
 ```
-For each stock:
-  1. Check fundamental filters (market cap, debt, promoter holding)
-  2. Detect technical patterns:
-     - Consolidation after uptrend
-     - Higher lows formation
-     - Range tightening (compression)
-  3. Calculate volume profile (HVN/LVN)
-  4. Validate R:R ratio (>2.5x)
-  5. Calculate position size (1% risk)
+.venv/Scripts/python.exe -m pytest -q -p no:cacheprovider \
+  -o cache_dir=<scratch>/pytest_cache --basetemp=<scratch>/pytest_tmp
 ```
 
-### Agent Orchestration Flow (To Implement)
-```
-CrewAI Orchestrator
-  ↓
-Scanner Agent
-  ├─ Tool: fetch_ohlcv_data
-  ├─ Tool: detect_patterns
-  ├─ Tool: calculate_volume_profile
-  └─ Tool: validate_risk_reward
-  ↓
-Output: List[dict] with 5-10 trade setups
-```
+On a normal dev machine the plain `python -m pytest -q` works.
+
+### Deps actually installed in build venv (subset of requirements.txt)
+
+pandas 2.2.0, numpy 1.26.0, pydantic 2.12.5, pydantic-settings 2.10.1,
+pytest 8.1.1, pytest-mock 3.12.0, python-dotenv 1.2.2, pyarrow, sqlalchemy 2.0.28,
+requests, beautifulsoup4, structlog, yfinance 0.2.37, streamlit 1.32.0, plotly 5.20.0,
+apprise 1.7.4.
+
+**Intentionally NOT installed in build venv** (heavy / not needed for deterministic
++ mockable-agent tests): `crewai`, `langchain`, `langchain-anthropic`, `nsepy`,
+`vectorbt`, `backtesting`, `apscheduler`, `psycopg2-binary`, `python-telegram-bot`.
+They remain in requirements.txt for full LLM runs. **Design rule: all agent and
+backtest code must be importable and unit-testable WITHOUT these heavy deps** —
+use lazy imports and injectable/mockable LLM clients.
 
 ---
 
-## 📦 Dependencies Status
+## ✅ COMPLETE & VERIFIED (Waves 0–1)
 
-### Installed (via requirements.txt):
-- ✅ pydantic + pydantic-settings (config management)
-- ✅ pandas + numpy (data processing)
-- ✅ yfinance (NSE data)
-- ✅ crewai + langchain + anthropic (agent framework)
-- ⏳ pandas-ta / TA-Lib (technical indicators) - not yet used
-- ⏳ streamlit (dashboard) - not yet used
-- ⏳ backtesting.py (validation) - not yet used
+Verified by 31 passing tests (`tests/test_scanner.py`, `tests/test_config.py`).
 
-### Environment Variables Required:
-```bash
-# .env file
-ANTHROPIC_API_KEY=sk-ant-...          # Required
-TELEGRAM_BOT_TOKEN=123456:ABC...      # Optional
-TELEGRAM_CHAT_ID=123456789            # Optional
-DATABASE_URL=sqlite:///./data/stonx.db  # Has default
-```
+### Wave 0 — Reproducible Foundation ✅
+- FND-01 `.python-version` (3.12.13) + README setup section
+- FND-02 `requirements.txt` fixed (`nsepy==0.8`, not 0.9.1)
+- FND-03 `pyarrow` added for parquet cache
+- FND-04 `.env.example` present
+- FND-05 `config.py` constructs without `ANTHROPIC_API_KEY` (key is Optional)
+- FND-06 README smoke-check docs
 
----
-
-## 🚨 Known Issues & Blockers
-
-### Issue 1: Shell Not Available
-**Problem**: Windows environment, no Posix shell (Bash tool unavailable)  
-**Impact**: Cannot use bash commands for folder creation  
-**Workaround**: Using Write tool to create files directly (creates parent dirs automatically)  
-**Status**: RESOLVED
-
-### Issue 2: NSE Data Quality (yfinance)
-**Problem**: yfinance for NSE data has gaps, corporate actions not always adjusted  
-**Impact**: May need fallback data source  
-**Mitigation**: 
-- Implemented 10% missing data threshold (skip stocks)
-- TODO: Add NSEpy as fallback (later phase)
-**Status**: MONITORING
-
-### Issue 3: Fundamental Data Source
-**Problem**: No Screener.in API integration yet  
-**Impact**: Fundamental filters using placeholder data  
-**Mitigation**: Using mock data for MVP, will integrate Screener.in API or CSV export later  
-**Status**: DEFERRED (Post-MVP)
+### Wave 1 — Deterministic Scanner Core ✅
+- DATA-01 CSV universe loader — `data/universe/nse_universe.csv` (40 stocks), `DataIngestion.get_universe/get_nse_universe/get_sector`
+- DATA-02 provider abstraction — `OHLCVProvider` Protocol + `YFinanceOHLCVProvider`
+- DATA-03 data quality metadata — `DataQualityMetadata` (source, missing %, adjusted, cache age)
+- DATA-04 fundamentals from CSV — `FundamentalCSVSource` + `data/fundamentals/fundamentals_fixture.csv` (20 rows), promoter holding enforced
+- SCAN-01 config wired via `build_*_from_config()` in `modules/scanner.py`
+- SCAN-02 deterministic pipeline — `DeterministicScanner.run()` returns `ScannerOutput` (candidates + funnel counts, no LLM)
+- SCAN-03 market regime → risk gate — `detect_market_regime()`, bear uses higher min R:R (tested)
+- SCAN-04 portfolio heat + sector limits in scan path — `RiskManager.validate_batch()` (tested)
+- SCAN-05 false-breakout 2-bar hold rule — `PatternDetector.breakout_hold_bars` (tested)
+- SCAN-06 JSON + CSV output — `write_scan_outputs()` (tested)
 
 ---
 
-## 🎓 Context for New Session
+## 🔑 Key Interfaces (build against these — do NOT change signatures)
 
-### What We're Building:
-An **intelligent multi-agent stock scanner** for Indian equities (NSE/BSE) that:
-1. Scans 5000+ stocks through 5-stage pipeline (fundamental → technical → volume → risk)
-2. Uses AI agents to reason about setups (not just rule-based)
-3. Provides explainable recommendations (why each stock was picked)
-4. Learns from trade outcomes to improve over time
-
-### Why Multi-Agent Architecture:
-- **Scanner Agent**: Runs technical pipeline, finds patterns
-- **Research Agent**: Validates with news/fundamentals (to be built)
-- **Risk Agent**: Challenges setups adversarially (to be built)
-- **Execution Agent**: Monitors trades, alerts on stop breach (to be built)
-- **Learning Agent**: Analyzes outcomes, tunes thresholds (to be built)
-
-### Current Focus:
-Building **Scanner Agent POC** - the foundation that other agents will build upon. Once Scanner Agent works end-to-end, we'll add Research/Risk agents.
-
----
-
-## 🚀 Quick Start for New Session
-
-### 1. Resume Context
-```bash
-# Read these files first:
-- SESSION_STATE.md (this file)
-- PRD_v2_with_recommendations.md (architecture)
-- config.py (configuration)
-- modules/ingest.py (data pipeline)
-```
-
-### 2. Verify Environment
-```bash
-# Check dependencies
-pip list | grep -E "(crewai|langchain|anthropic|pandas)"
-
-# Check .env file has ANTHROPIC_API_KEY
-cat .env | grep ANTHROPIC_API_KEY
-```
-
-### 3. Next Steps (In Order)
-```bash
-# Create these 4 modules next:
-1. modules/fundamental.py
-2. modules/patterns.py
-3. modules/volume.py
-4. modules/risk.py
-
-# Then create tools:
-5. tools/data_tools.py
-
-# Then create Scanner Agent:
-6. agents/scanner_agent.py
-
-# Then create orchestrator:
-7. orchestrator/crew.py
-
-# Finally, test end-to-end:
-8. run_scanner.py
-```
+- `modules/scanner.py`
+  - `DeterministicScanner(config, ingestion, fundamentals, pattern_detector, volume_profiler)`
+  - `.run(symbols, limit, market_regime, portfolio, use_cache) -> ScannerOutput`
+  - `ScannerOutput{timestamp, market_regime: MarketRegime, funnel_counts: dict, candidates: [ScannerCandidate], rejected: [RejectedSetup], data_quality}`
+  - `ScannerCandidate{rank, symbol, pattern, confidence, entry, stop, target, rr_ratio, position_shares, position_inr, capital_at_risk_inr, capital_at_risk_pct, sector, market_regime, risk_status, rationale}`
+  - `write_scan_outputs(output, output_dir, basename) -> {"json":Path,"csv":Path}`
+  - `build_{ingestion,fundamental_filter,pattern_detector,volume_profiler,risk_manager}_from_config(config, ...)`
+  - `load_scanner_config()` — returns config without needing API key
+- `modules/risk.py`: `RiskSetup{symbol,entry_price,stop_price,target_price,sector}`, `RiskResult{...,approved,rr_ratio,position_size_shares,position_size_inr,capital_at_risk_inr,capital_at_risk_pct,rejection_reason}`, `PortfolioState{open_positions,sector_counts,total_heat,position_count}`, `RiskManager.validate/validate_batch`
+- `modules/ingest.py`: `DataIngestion.fetch_ohlcv_with_quality(symbol,...) -> OHLCVFetchResult{symbol,data:DataFrame|None,quality:DataQualityMetadata}`; `normalize_nse_symbol()`; `OHLCVProvider` Protocol (`.fetch(symbol,start,end)`, `.source_name`, `.adjusted`)
+- `modules/fundamental.py`: `FundamentalFilter.screen(symbol) -> FundamentalResult{symbol,passed,data:FundamentalData,rejection_reason}`
+- `modules/patterns.py`: `PatternDetector.scan(symbol, df) -> ScanResult{symbol,patterns:[PatternResult],best_pattern,passed}`
+- `modules/volume.py`: `VolumeProfiler.analyse(symbol, df) -> (VolumeProfile|None, hvn_support|None, lvn_targets:list)`
+- `config.py`: `ScannerConfig` (pydantic-settings), `get_config()`, agent model names present
+- Interface contracts (Research/Risk/Execution/Learning JSON shapes): see `PRD_v2_agent_task_breakdown.md` "Interface Contracts".
 
 ---
 
-## 📊 Progress Metrics
+## 🏗️ Build Plan (ralph-wiggum: build → test → fix until green, per round)
 
-**Time Spent**: ~2 hours (setup + data ingestion)  
-**Lines of Code**: ~350 (config.py + ingest.py)  
-**Modules Complete**: 1/5 (ingest.py)  
-**Agents Complete**: 0/5  
-**Estimated Remaining**: 16-18 days
+Ownership is DISJOINT per round to avoid file conflicts. Shared files
+(`config.py`, `requirements.txt`, `orchestrator/crew.py`, `run_scanner.py`) are
+integrated by the main agent between rounds.
 
-**Next Milestone**: Scanner Agent working end-to-end (3-4 days)
+### Round 1 — Foundations for the rest  [STATUS: ✅ COMPLETE — verified 71 passed]
+- **Backtest (Wave 2, BT-01..06)** ✅ `modules/backtest.py` (23 tests) + `reports/sample_backtest_report.md`. Reuses scanner/risk/pattern/volume. Public API: `BacktestConfig`, `BacktestTrade`, `BacktestMetrics`, `BacktestResult`, `WalkForwardSplit`, `Backtester.run/walk_forward/optimize`, `generate_report`, `evaluate_thresholds`, `DEFAULT_THRESHOLDS`.
+- **Journal/Persistence (Wave 3, DB-01..04)** ✅ `modules/journal.py` (17 tests). Models: `Candidate`, `AgentDecision`, `OpenPosition`, `ClosedTrade` (Base=DeclarativeBase). Service `TradeJournal(db_url|engine)`: `record_scan`, `get_candidates`, `record_agent_decision`, `get_agent_decisions`, `open_position`, `update_position`, `close_trade`, `get_open_positions`, `get_closed_trades`, `summary`. Query methods return dicts. Supports `sqlite:///:memory:` (StaticPool).
+- **Shared-file prep (main agent)** ✅ Made `agents/__init__.py` and `tools/__init__.py` LAZY (PEP 562) so importing a specific agent/tool module does not pull in crewai/langchain. Added `agents/llm.py` with `LLMClient` protocol, `DeterministicLLM`, `FakeLLM`, `build_llm_client()` (degrades gracefully w/o key/deps). **All new agents must accept `llm_client: LLMClient | None` and default to DeterministicLLM.**
 
----
+### Round 2 — Agents + orchestration  [STATUS: ✅ COMPLETE — verified 135 passed]
+- **Research Agent (Wave 4, RES-01..03)** ✅ `tools/web_tools.py` (`WebResearchSource` Protocol, `StubWebSource`, `NullWebSource`), `agents/research_agent.py` (`ResearchAgent(llm_client, web_source, staleness_days)`, `ResearchResult`, `Citation`), 14 tests.
+- **Risk Agent (Wave 4, RISK-01..03)** ✅ `tools/risk_tools.py` (`annualized_volatility`, `beta`, `correlation`, `average_true_range`, `max_drawdown`, `compute_risk_metrics`), `agents/risk_agent.py` (`RiskAgent.challenge/challenge_batch`, `RiskDecision`, `apply_size_multiplier`), 24 tests.
+- **Execution + Alerts (Wave 6, EXEC-01..03, ALERT-01..03)** ✅ `agents/execution_agent.py` (`ExecutionAgent(journal, price_provider, alert_sender, one_r_trail)`, `ExecutionEvent`, `DictPriceProvider`), `tools/alert_tools.py` (`AlertFormatter`, `AlertSender(dry_run=True)` — apprise lazy, no live send in dry-run), 23 tests.
+- **Orchestration (ORCH-01..02)** ✅ `orchestrator/pipeline.py` (`ScanResearchRiskPipeline.run()` → scanner→research→risk, persists candidates + agent reasoning to journal; `PipelineResult`, `PipelineDecision`), 3 tests. Legacy `orchestrator/crew.py` (CrewAI) left intact. Made `orchestrator/__init__.py` lazy.
 
-## 💡 Tips for Continuation
+### Round 3 — UI + Learning  [STATUS: IN PROGRESS]
+- **Learning (Wave 7, LEARN-01..05)** → NEW `modules/learning.py`, `agents/learning_agent.py`, tests. Needs journal + backtest. Min 50 closed trades gate; backtest-validated recommendations; human approval.
+- **Dashboard (Wave 5, UI-01..07)** → NEW `app.py` (streamlit) reading journal + scan outputs + reasoning. Tabs: Scanner Output, Agent Reasoning, Trade Journal, Learning Insights.
 
-1. **Start with modules/patterns.py** - most complex, will inform other modules
-2. **Use PRD Section 5.3** as reference for pattern detection logic
-3. **Keep modules pure functions** - agents will wrap them as tools
-4. **Test each module independently** before integrating
-5. **Use logging extensively** - helps debug agent tool calls
-
----
-
-## 📝 Notes & Observations
-
-- **Data Quality**: yfinance works but has occasional gaps; monitor for production readiness
-- **Agent Costs**: Using Haiku for Scanner Agent to keep costs low (~$0.25/1M input tokens)
-- **Caching Critical**: Without caching, would hit yfinance rate limits quickly
-- **Pattern Library**: Starting with 3 patterns (consolidation, higher lows, compression), will expand to 8-10 later
+### Round 4 — Full-system QA (Wave 8, QA-01..06)  [STATUS: PENDING]
+- Integration tests with mocked externals, CLI smoke tests, PRD feature matrix, final status doc, regression loop.
 
 ---
 
-**End of Session State**
+## 📁 Files to be created (target inventory)
 
-Last action: Created data ingestion module with caching  
-Next action: Create pattern detection module  
-Ready to resume: ✅
+Missing per audit → to build:
+- [x] `modules/backtest.py`  (Round 1) ✅
+- [x] `modules/journal.py`   (Round 1) ✅
+- [x] `agents/llm.py` (shared LLM abstraction) ✅
+- [x] `tools/web_tools.py`   (Round 2) ✅
+- [x] `tools/risk_tools.py`  (Round 2) ✅
+- [x] `tools/alert_tools.py` (Round 2) ✅
+- [x] `agents/research_agent.py`   (Round 2) ✅
+- [x] `agents/risk_agent.py`       (Round 2) ✅
+- [x] `agents/execution_agent.py`  (Round 2) ✅
+- [x] `orchestrator/pipeline.py` scanner→research→risk wiring (main) ✅
+- [x] `reports/` backtest artifact ✅
+- [ ] `agents/learning_agent.py`   (Round 3)
+- [ ] `modules/learning.py`        (Round 3)
+- [ ] `app.py`                     (Round 3)
+- [ ] tests for each of the above
+
+---
+
+## 🚨 Constraints / Design Rules (enforce in every agent)
+1. Deterministic modules stay pure and LLM-free; agents wrap them.
+2. Agents take an **injectable LLM client** (default deterministic/heuristic fallback) so tests run with a fake — no API key, no network, no crewai/langchain hard import at module top.
+3. New features add NEW files; do not edit another round's files.
+4. Every new module ships with tests that pass under the canonical pytest command.
+5. Keep heavy imports (crewai, langchain, streamlit, apprise, vectorbt) lazy/optional.
+6. Money math (R:R, sizing, heat, expectancy) must be deterministic and unit-tested.
+
+---
+
+## 🔁 Verification Log (ralph-wiggum loop)
+- Baseline: **31 passed** (test_scanner.py, test_config.py) in venv. ✅
+- Round 1: **71 passed** (+backtest 23, +journal 17). ✅
+- Round 2: **135 passed** (+research 14, +risk 24, +exec/alerts 23, +orchestrator 3). ✅
+- Round 3: _pending_
+- Round 4: _pending_
+
+---
+
+## ▶️ Next action if resuming now
+Round 1 agents (Backtest + Journal) are being/So-far spawned. On resume:
+1. Recreate venv (see Environment Reproduction).
+2. Run canonical pytest — confirm baseline green.
+3. Check which target files exist (see inventory) to see how far Round 1/2/3 got.
+4. Continue the next PENDING round; after each, run full test suite and update the Verification Log + inventory checkboxes here.

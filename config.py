@@ -14,7 +14,8 @@ class ScannerConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore",
     )
 
     # ==================== Capital & Risk ====================
@@ -190,9 +191,9 @@ class ScannerConfig(BaseSettings):
     )
 
     # ==================== API Keys ====================
-    ANTHROPIC_API_KEY: str = Field(
-        ...,
-        description="Anthropic API key for Claude models"
+    ANTHROPIC_API_KEY: Optional[str] = Field(
+        default=None,
+        description="Anthropic API key for Claude models; required only for agent workflows"
     )
 
     TELEGRAM_BOT_TOKEN: Optional[str] = Field(

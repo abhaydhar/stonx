@@ -1,20 +1,24 @@
 # Core Dependencies
-python-dotenv==1.0.0
-pydantic==2.7.0
-pydantic-settings==2.2.1
+python-dotenv==1.2.2
+pydantic==2.12.5
+pydantic-settings==2.10.1
 
 # Data & Analysis
 pandas==2.2.0
 numpy==1.26.0
 yfinance==0.2.37
-nsepy==0.9.1
+pyarrow==24.0.0
+nsepy==0.8
 
 # Technical Analysis
-pandas-ta==0.3.14b
-TA-Lib==0.4.28
+# The current scanner modules use pandas/numpy directly.
+# pandas-ta and TA-Lib are intentionally omitted from the default install:
+# pandas-ta==0.3.14b is no longer resolvable on PyPI, and TA-Lib requires
+# native build dependencies on Windows/Python 3.12. Add them back only when
+# code imports them and CI images provide the required native libraries.
 
 # Agent Framework
-crewai==0.28.0
+crewai==1.15.2
 langchain==0.1.20
 langchain-anthropic==0.1.11
 anthropic==0.25.0
@@ -29,7 +33,7 @@ plotly==5.20.0
 
 # Alerting
 apprise==1.7.4
-python-telegram-bot==20.8
+python-telegram-bot==22.8
 
 # Scheduling
 apscheduler==3.10.4
