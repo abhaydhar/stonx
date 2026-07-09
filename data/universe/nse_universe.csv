@@ -1,41 +1,501 @@
 symbol,name,sector
-RELIANCE.NS,Reliance Industries,Energy
-TCS.NS,Tata Consultancy Services,IT
-HDFCBANK.NS,HDFC Bank,Financial Services
-INFY.NS,Infosys,IT
-HINDUNILVR.NS,Hindustan Unilever,FMCG
-ICICIBANK.NS,ICICI Bank,Financial Services
-KOTAKBANK.NS,Kotak Mahindra Bank,Financial Services
-SBIN.NS,State Bank of India,Financial Services
-BHARTIARTL.NS,Bharti Airtel,Telecom
-ITC.NS,ITC,FMCG
-AXISBANK.NS,Axis Bank,Financial Services
-LT.NS,Larsen and Toubro,Construction
+360ONE.NS,360 ONE WAM,Financial Services
+3MINDIA.NS,3M India,Diversified
+ABB.NS,ABB India,Capital Goods
+ACC.NS,ACC,Construction Materials
+ACMESOLAR.NS,ACME Solar Holdings,Power
+AIAENG.NS,AIA Engineering,Capital Goods
+APLAPOLLO.NS,APL Apollo Tubes,Capital Goods
+AUBANK.NS,AU Small Finance Bank,Financial Services
+AWL.NS,AWL Agri Business,Fast Moving Consumer Goods
+AADHARHFC.NS,Aadhar Housing Finance,Financial Services
+AARTIIND.NS,Aarti Industries,Chemicals
+AAVAS.NS,Aavas Financiers,Financial Services
+ABBOTINDIA.NS,Abbott India,Healthcare
+ACE.NS,Action Construction Equipment,Capital Goods
+ACUTAAS.NS,Acutaas Chemicals,Healthcare
+ADANIENSOL.NS,Adani Energy Solutions,Power
+ADANIENT.NS,Adani Enterprises,Metals & Mining
+ADANIGREEN.NS,Adani Green Energy,Power
+ADANIPORTS.NS,Adani Ports and Special Economic Zone,Services
+ADANIPOWER.NS,Adani Power,Power
+ATGL.NS,Adani Total Gas,Oil Gas & Consumable Fuels
+ABCAPITAL.NS,Aditya Birla Capital,Financial Services
+ABFRL.NS,Aditya Birla Fashion and Retail,Consumer Services
+ABLBL.NS,Aditya Birla Lifestyle Brands,Consumer Services
+ABREL.NS,Aditya Birla Real Estate,Realty
+ABSLAMC.NS,Aditya Birla Sun Life AMC,Financial Services
+CPPLUS.NS,Aditya Infotech,Capital Goods
+AEGISLOG.NS,Aegis Logistics,Oil Gas & Consumable Fuels
+AEGISVOPAK.NS,Aegis Vopak Terminals,Oil Gas & Consumable Fuels
+AFCONS.NS,Afcons Infrastructure,Construction
+AFFLE.NS,Affle 3i,Information Technology
+AJANTPHARM.NS,Ajanta Pharmaceuticals,Healthcare
+ALKEM.NS,Alkem Laboratories,Healthcare
+ABDL.NS,Allied Blenders and Distillers,Fast Moving Consumer Goods
+ARE&M.NS,Amara Raja Energy & Mobility,Automobile and Auto Components
+AMBER.NS,Amber Enterprises India,Consumer Durables
+AMBUJACEM.NS,Ambuja Cements,Construction Materials
+ANANDRATHI.NS,Anand Rathi Wealth,Financial Services
+ANANTRAJ.NS,Anant Raj,Realty
+ANGELONE.NS,Angel One,Financial Services
+ANTHEM.NS,Anthem Biosciences,Healthcare
+ANURAS.NS,Anupam Rasayan India,Chemicals
+APARINDS.NS,Apar Industries,Capital Goods
+APOLLOHOSP.NS,Apollo Hospitals Enterprise,Healthcare
+APOLLOTYRE.NS,Apollo Tyres,Automobile and Auto Components
+APTUS.NS,Aptus Value Housing Finance India,Financial Services
+ASAHIINDIA.NS,Asahi India Glass,Automobile and Auto Components
+ASHOKLEY.NS,Ashok Leyland,Capital Goods
 ASIANPAINT.NS,Asian Paints,Consumer Durables
-MARUTI.NS,Maruti Suzuki,Automobile
-HCLTECH.NS,HCL Technologies,IT
-WIPRO.NS,Wipro,IT
-ULTRACEMCO.NS,UltraTech Cement,Cement
-TITAN.NS,Titan Company,Consumer Durables
-NESTLEIND.NS,Nestle India,FMCG
+ASTERDM.NS,Aster DM Healthcare,Healthcare
+ASTRAL.NS,Astral,Capital Goods
+ATHERENERG.NS,Ather Energy,Automobile and Auto Components
+ATUL.NS,Atul,Chemicals
+AUROPHARMA.NS,Aurobindo Pharma,Healthcare
+AIIL.NS,Authum Investment & Infrastructure,Financial Services
+DMART.NS,Avenue Supermarts,Consumer Services
+AXISBANK.NS,Axis Bank,Financial Services
+BEML.NS,BEML,Capital Goods
+BLS.NS,BLS International Services,Consumer Services
+BSE.NS,BSE,Financial Services
+BAJAJ-AUTO.NS,Bajaj Auto,Automobile and Auto Components
 BAJFINANCE.NS,Bajaj Finance,Financial Services
-TATAMOTORS.NS,Tata Motors,Automobile
-TATASTEEL.NS,Tata Steel,Metals
-SUNPHARMA.NS,Sun Pharma,Pharma
-ONGC.NS,ONGC,Energy
-M&M.NS,Mahindra and Mahindra,Automobile
-NTPC.NS,NTPC,Power
-POWERGRID.NS,Power Grid,Power
-TECHM.NS,Tech Mahindra,IT
-INDUSINDBK.NS,IndusInd Bank,Financial Services
-ADANIPORTS.NS,Adani Ports,Logistics
-JSWSTEEL.NS,JSW Steel,Metals
-COALINDIA.NS,Coal India,Energy
-GRASIM.NS,Grasim Industries,Materials
-HINDALCO.NS,Hindalco Industries,Metals
 BAJAJFINSV.NS,Bajaj Finserv,Financial Services
-DRREDDY.NS,Dr Reddy's Laboratories,Pharma
-CIPLA.NS,Cipla,Pharma
-EICHERMOT.NS,Eicher Motors,Automobile
-HEROMOTOCO.NS,Hero MotoCorp,Automobile
-BRITANNIA.NS,Britannia Industries,FMCG
+BAJAJHLDNG.NS,Bajaj Holdings & Investment,Financial Services
+BAJAJHFL.NS,Bajaj Housing Finance,Financial Services
+BALKRISIND.NS,Balkrishna Industries,Automobile and Auto Components
+BALRAMCHIN.NS,Balrampur Chini Mills,Fast Moving Consumer Goods
+BANDHANBNK.NS,Bandhan Bank,Financial Services
+BANKBARODA.NS,Bank of Baroda,Financial Services
+BANKINDIA.NS,Bank of India,Financial Services
+MAHABANK.NS,Bank of Maharashtra,Financial Services
+BATAINDIA.NS,Bata India,Consumer Durables
+BAYERCROP.NS,Bayer Cropscience,Chemicals
+BELRISE.NS,Belrise Industries,Automobile and Auto Components
+BERGEPAINT.NS,Berger Paints India,Consumer Durables
+BDL.NS,Bharat Dynamics,Capital Goods
+BEL.NS,Bharat Electronics,Capital Goods
+BHARATFORG.NS,Bharat Forge,Automobile and Auto Components
+BHEL.NS,Bharat Heavy Electricals,Capital Goods
+BPCL.NS,Bharat Petroleum Corporation,Oil Gas & Consumable Fuels
+BHARTIARTL.NS,Bharti Airtel,Telecommunication
+BHARTIHEXA.NS,Bharti Hexacom,Telecommunication
+BIKAJI.NS,Bikaji Foods International,Fast Moving Consumer Goods
+GROWW.NS,Billionbrains Garage Ventures,Financial Services
+BIOCON.NS,Biocon,Healthcare
+BSOFT.NS,Birlasoft,Information Technology
+BLUEDART.NS,Blue Dart Express,Services
+BLUEJET.NS,Blue Jet Healthcare,Healthcare
+BLUESTARCO.NS,Blue Star,Consumer Durables
+BBTC.NS,Bombay Burmah Trading Corporation,Fast Moving Consumer Goods
+BOSCHLTD.NS,Bosch,Automobile and Auto Components
+FIRSTCRY.NS,Brainbees Solutions,Consumer Services
+BRIGADE.NS,Brigade Enterprises,Realty
+BRITANNIA.NS,Britannia Industries,Fast Moving Consumer Goods
+MAPMYINDIA.NS,C.E. Info Systems,Information Technology
+CCL.NS,CCL Products (I),Fast Moving Consumer Goods
+CESC.NS,CESC,Power
+CGPOWER.NS,CG Power and Industrial Solutions,Capital Goods
+CIEINDIA.NS,CIE Automotive India,Automobile and Auto Components
+CRISIL.NS,CRISIL,Financial Services
+CANFINHOME.NS,Can Fin Homes,Financial Services
+CANBK.NS,Canara Bank,Financial Services
+CANHLIFE.NS,Canara HSBC Life Insurance Company,Financial Services
+CAPLIPOINT.NS,Caplin Point Laboratories,Healthcare
+CGCL.NS,Capri Global Capital,Financial Services
+CARBORUNIV.NS,Carborundum Universal,Capital Goods
+CARTRADE.NS,Cartrade Tech,Consumer Services
+CASTROLIND.NS,Castrol India,Oil Gas & Consumable Fuels
+CEATLTD.NS,Ceat,Automobile and Auto Components
+CEMPRO.NS,Cemindia Projects,Construction
+CENTRALBK.NS,Central Bank of India,Financial Services
+CDSL.NS,Central Depository Services (India),Financial Services
+CHALET.NS,Chalet Hotels,Consumer Services
+CHAMBLFERT.NS,Chambal Fertilizers & Chemicals,Chemicals
+CHENNPETRO.NS,Chennai Petroleum Corporation,Oil Gas & Consumable Fuels
+CHOICEIN.NS,Choice International,Financial Services
+CHOLAHLDNG.NS,Cholamandalam Financial Holdings,Financial Services
+CHOLAFIN.NS,Cholamandalam Investment and Finance Company,Financial Services
+CIPLA.NS,Cipla,Healthcare
+CUB.NS,City Union Bank,Financial Services
+CLEAN.NS,Clean Science and Technology,Chemicals
+COALINDIA.NS,Coal India,Oil Gas & Consumable Fuels
+COCHINSHIP.NS,Cochin Shipyard,Capital Goods
+COFORGE.NS,Coforge,Information Technology
+COHANCE.NS,Cohance Lifesciences,Healthcare
+COLPAL.NS,Colgate Palmolive (India),Fast Moving Consumer Goods
+CAMS.NS,Computer Age Management Services,Financial Services
+CONCORDBIO.NS,Concord Biotech,Healthcare
+CONCOR.NS,Container Corporation of India,Services
+COROMANDEL.NS,Coromandel International,Chemicals
+CRAFTSMAN.NS,Craftsman Automation,Automobile and Auto Components
+CREDITACC.NS,CreditAccess Grameen,Financial Services
+CROMPTON.NS,Crompton Greaves Consumer Electricals,Consumer Durables
+CUMMINSIND.NS,Cummins India,Capital Goods
+CYIENT.NS,Cyient,Information Technology
+DCMSHRIRAM.NS,DCM Shriram,Diversified
+DLF.NS,DLF,Realty
+DOMS.NS,DOMS Industries,Fast Moving Consumer Goods
+DABUR.NS,Dabur India,Fast Moving Consumer Goods
+DALBHARAT.NS,Dalmia Bharat,Construction Materials
+DATAPATTNS.NS,Data Patterns (India),Capital Goods
+DEEPAKFERT.NS,Deepak Fertilisers & Petrochemicals Corp.,Chemicals
+DEEPAKNTR.NS,Deepak Nitrite,Chemicals
+DELHIVERY.NS,Delhivery,Services
+DEVYANI.NS,Devyani International,Consumer Services
+DIVISLAB.NS,Divi's Laboratories,Healthcare
+DIXON.NS,Dixon Technologies (India),Consumer Durables
+LALPATHLAB.NS,Dr. Lal Path Labs,Healthcare
+DRREDDY.NS,Dr. Reddy's Laboratories,Healthcare
+EIDPARRY.NS,E.I.D. Parry (India),Fast Moving Consumer Goods
+EIHOTEL.NS,EIH,Consumer Services
+EICHERMOT.NS,Eicher Motors,Automobile and Auto Components
+ELECON.NS,Elecon Engineering Co.,Capital Goods
+ELGIEQUIP.NS,Elgi Equipments,Capital Goods
+EMAMILTD.NS,Emami,Fast Moving Consumer Goods
+EMCURE.NS,Emcure Pharmaceuticals,Healthcare
+EMMVEE.NS,Emmvee Photovoltaic Power,Capital Goods
+ENDURANCE.NS,Endurance Technologies,Automobile and Auto Components
+ENGINERSIN.NS,Engineers India,Construction
+ERIS.NS,Eris Lifesciences,Healthcare
+ESCORTS.NS,Escorts Kubota,Capital Goods
+ETERNAL.NS,Eternal,Consumer Services
+EXIDEIND.NS,Exide Industries,Automobile and Auto Components
+NYKAA.NS,FSN E-Commerce Ventures,Consumer Services
+FEDERALBNK.NS,Federal Bank,Financial Services
+FACT.NS,Fertilisers and Chemicals Travancore,Chemicals
+FINCABLES.NS,Finolex Cables,Capital Goods
+FSL.NS,Firstsource Solutions,Services
+FIVESTAR.NS,Five-Star Business Finance,Financial Services
+FORCEMOT.NS,Force Motors,Automobile and Auto Components
+FORTIS.NS,Fortis Healthcare,Healthcare
+GAIL.NS,GAIL (India),Oil Gas & Consumable Fuels
+GVT&D.NS,GE Vernova T&D India,Capital Goods
+GMRAIRPORT.NS,GMR Airports,Services
+GABRIEL.NS,Gabriel India,Automobile and Auto Components
+GALLANTT.NS,Gallantt Ispat,Capital Goods
+GRSE.NS,Garden Reach Shipbuilders & Engineers,Capital Goods
+GICRE.NS,General Insurance Corporation of India,Financial Services
+GILLETTE.NS,Gillette India,Fast Moving Consumer Goods
+GLAND.NS,Gland Pharma,Healthcare
+GLAXO.NS,Glaxosmithkline Pharmaceuticals,Healthcare
+GLENMARK.NS,Glenmark Pharmaceuticals,Healthcare
+MEDANTA.NS,Global Health,Healthcare
+GODIGIT.NS,Go Digit General Insurance,Financial Services
+GPIL.NS,Godawari Power & Ispat,Capital Goods
+GODFRYPHLP.NS,Godfrey Phillips India,Fast Moving Consumer Goods
+GODREJCP.NS,Godrej Consumer Products,Fast Moving Consumer Goods
+GODREJIND.NS,Godrej Industries,Diversified
+GODREJPROP.NS,Godrej Properties,Realty
+GRANULES.NS,Granules India,Healthcare
+GRAPHITE.NS,Graphite India,Capital Goods
+GRASIM.NS,Grasim Industries,Construction Materials
+GRAVITA.NS,Gravita India,Metals & Mining
+GESHIP.NS,Great Eastern Shipping Co.,Services
+FLUOROCHEM.NS,Gujarat Fluorochemicals,Chemicals
+GMDCLTD.NS,Gujarat Mineral Development Corporation,Metals & Mining
+HEG.NS,H.E.G.,Capital Goods
+HBLENGINE.NS,HBL Engineering,Capital Goods
+HCLTECH.NS,HCL Technologies,Information Technology
+HDBFS.NS,HDB Financial Services,Financial Services
+HDFCAMC.NS,HDFC Asset Management Company,Financial Services
+HDFCBANK.NS,HDFC Bank,Financial Services
+HDFCLIFE.NS,HDFC Life Insurance Company,Financial Services
+HFCL.NS,HFCL,Telecommunication
+HAVELLS.NS,Havells India,Consumer Durables
+HEROMOTOCO.NS,Hero MotoCorp,Automobile and Auto Components
+HEXT.NS,Hexaware Technologies,Information Technology
+HSCL.NS,Himadri Speciality Chemical,Chemicals
+HINDALCO.NS,Hindalco Industries,Metals & Mining
+HAL.NS,Hindustan Aeronautics,Capital Goods
+HINDCOPPER.NS,Hindustan Copper,Metals & Mining
+HINDPETRO.NS,Hindustan Petroleum Corporation,Oil Gas & Consumable Fuels
+HINDUNILVR.NS,Hindustan Unilever,Fast Moving Consumer Goods
+HINDZINC.NS,Hindustan Zinc,Metals & Mining
+POWERINDIA.NS,Hitachi Energy India,Capital Goods
+HOMEFIRST.NS,Home First Finance Company India,Financial Services
+HONASA.NS,Honasa Consumer,Fast Moving Consumer Goods
+HONAUT.NS,Honeywell Automation India,Capital Goods
+HUDCO.NS,Housing & Urban Development Corporation,Financial Services
+HYUNDAI.NS,Hyundai Motor India,Automobile and Auto Components
+ICICIBANK.NS,ICICI Bank,Financial Services
+ICICIGI.NS,ICICI Lombard General Insurance Company,Financial Services
+ICICIAMC.NS,ICICI Prudential Asset Management Company,Financial Services
+ICICIPRULI.NS,ICICI Prudential Life Insurance Company,Financial Services
+IDBI.NS,IDBI Bank,Financial Services
+IDFCFIRSTB.NS,IDFC First Bank,Financial Services
+IFCI.NS,IFCI,Financial Services
+IIFL.NS,IIFL Finance,Financial Services
+IRB.NS,IRB Infrastructure Developers,Construction
+IRCON.NS,IRCON International,Construction
+ITCHOTELS.NS,ITC Hotels,Consumer Services
+ITC.NS,ITC,Fast Moving Consumer Goods
+ITI.NS,ITI,Telecommunication
+INDGN.NS,Indegene,Healthcare
+INDIACEM.NS,India Cements,Construction Materials
+INDIAMART.NS,Indiamart Intermesh,Consumer Services
+INDIANB.NS,Indian Bank,Financial Services
+IEX.NS,Indian Energy Exchange,Financial Services
+INDHOTEL.NS,Indian Hotels Co.,Consumer Services
+IOC.NS,Indian Oil Corporation,Oil Gas & Consumable Fuels
+IOB.NS,Indian Overseas Bank,Financial Services
+IRCTC.NS,Indian Railway Catering And Tourism Corporation,Consumer Services
+IRFC.NS,Indian Railway Finance Corporation,Financial Services
+IREDA.NS,Indian Renewable Energy Development Agency,Financial Services
+IGL.NS,Indraprastha Gas,Oil Gas & Consumable Fuels
+INDUSTOWER.NS,Indus Towers,Telecommunication
+INDUSINDBK.NS,IndusInd Bank,Financial Services
+NAUKRI.NS,Info Edge (India),Consumer Services
+INFY.NS,Infosys,Information Technology
+INOXWIND.NS,Inox Wind,Capital Goods
+INTELLECT.NS,Intellect Design Arena,Information Technology
+INDIGO.NS,InterGlobe Aviation,Services
+IGIL.NS,International Gemological Institute,Services
+IKS.NS,Inventurus Knowledge Solutions,Information Technology
+IPCALAB.NS,Ipca Laboratories,Healthcare
+JBCHEPHARM.NS,J.B. Chemicals & Pharmaceuticals,Healthcare
+JKCEMENT.NS,J.K. Cement,Construction Materials
+JBMA.NS,JBM Auto,Automobile and Auto Components
+JKTYRE.NS,JK Tyre & Industries,Automobile and Auto Components
+JMFINANCIL.NS,JM Financial,Financial Services
+JSWCEMENT.NS,JSW Cement,Construction Materials
+JSWDULUX.NS,JSW Dulux,Consumer Durables
+JSWENERGY.NS,JSW Energy,Power
+JSWINFRA.NS,JSW Infrastructure,Services
+JSWSTEEL.NS,JSW Steel,Metals & Mining
+JAINREC.NS,Jain Resource Recycling,Metals & Mining
+JPPOWER.NS,Jaiprakash Power Ventures,Power
+J&KBANK.NS,Jammu & Kashmir Bank,Financial Services
+JINDALSAW.NS,Jindal Saw,Capital Goods
+JSL.NS,Jindal Stainless,Metals & Mining
+JINDALSTEL.NS,Jindal Steel,Metals & Mining
+JIOFIN.NS,Jio Financial Services,Financial Services
+JUBLFOOD.NS,Jubilant Foodworks,Consumer Services
+JUBLINGREA.NS,Jubilant Ingrevia,Chemicals
+JUBLPHARMA.NS,Jubilant Pharmova,Healthcare
+JWL.NS,Jupiter Wagons,Capital Goods
+JYOTICNC.NS,Jyoti CNC Automation,Capital Goods
+KPRMILL.NS,K.P.R. Mill,Textiles
+KEI.NS,KEI Industries,Capital Goods
+KPITTECH.NS,KPIT Technologies,Information Technology
+KAJARIACER.NS,Kajaria Ceramics,Consumer Durables
+KPIL.NS,Kalpataru Projects International,Construction
+KALYANKJIL.NS,Kalyan Jewellers India,Consumer Durables
+KARURVYSYA.NS,Karur Vysya Bank,Financial Services
+KAYNES.NS,Kaynes Technology India,Capital Goods
+KEC.NS,Kec International,Construction
+KFINTECH.NS,Kfin Technologies,Financial Services
+KIRLOSENG.NS,Kirloskar Oil Eng,Capital Goods
+KOTAKBANK.NS,Kotak Mahindra Bank,Financial Services
+KIMS.NS,Krishna Institute of Medical Sciences,Healthcare
+LTF.NS,L&T Finance,Financial Services
+LTTS.NS,L&T Technology Services,Information Technology
+LGEINDIA.NS,LG Electronics India,Consumer Durables
+LICHSGFIN.NS,LIC Housing Finance,Financial Services
+LTFOODS.NS,LT Foods,Fast Moving Consumer Goods
+LTM.NS,LTM,Information Technology
+LT.NS,Larsen & Toubro,Construction
+LATENTVIEW.NS,Latent View Analytics,Information Technology
+LAURUSLABS.NS,Laurus Labs,Healthcare
+THELEELA.NS,Leela Palaces Hotels & Resorts,Consumer Services
+LEMONTREE.NS,Lemon Tree Hotels,Consumer Services
+LENSKART.NS,Lenskart Solutions,Consumer Services
+LICI.NS,Life Insurance Corporation of India,Financial Services
+LINDEINDIA.NS,Linde India,Chemicals
+LLOYDSME.NS,Lloyds Metals And Energy,Metals & Mining
+LODHA.NS,Lodha Developers,Realty
+LUPIN.NS,Lupin,Healthcare
+MMTC.NS,MMTC,Services
+MRF.NS,MRF,Automobile and Auto Components
+MGL.NS,Mahanagar Gas,Oil Gas & Consumable Fuels
+M&MFIN.NS,Mahindra & Mahindra Financial Services,Financial Services
+M&M.NS,Mahindra & Mahindra,Automobile and Auto Components
+MANAPPURAM.NS,Manappuram Finance,Financial Services
+MRPL.NS,Mangalore Refinery & Petrochemicals,Oil Gas & Consumable Fuels
+MANKIND.NS,Mankind Pharma,Healthcare
+MARICO.NS,Marico,Fast Moving Consumer Goods
+MARUTI.NS,Maruti Suzuki India,Automobile and Auto Components
+MFSL.NS,Max Financial Services,Financial Services
+MAXHEALTH.NS,Max Healthcare Institute,Healthcare
+MAZDOCK.NS,Mazagoan Dock Shipbuilders,Capital Goods
+MEESHO.NS,Meesho,Consumer Services
+MINDACORP.NS,Minda Corporation,Automobile and Auto Components
+MSUMI.NS,Motherson Sumi Wiring India,Automobile and Auto Components
+MOTILALOFS.NS,Motilal Oswal Financial Services,Financial Services
+MPHASIS.NS,MphasiS,Information Technology
+MCX.NS,Multi Commodity Exchange of India,Financial Services
+MUTHOOTFIN.NS,Muthoot Finance,Financial Services
+NATCOPHARM.NS,NATCO Pharma,Healthcare
+NBCC.NS,NBCC (India),Construction
+NCC.NS,NCC,Construction
+NHPC.NS,NHPC,Power
+NLCINDIA.NS,NLC India,Power
+NMDC.NS,NMDC,Metals & Mining
+NSLNISP.NS,NMDC Steel,Metals & Mining
+NTPCGREEN.NS,NTPC Green Energy,Power
+NTPC.NS,NTPC,Power
+NH.NS,Narayana Hrudayalaya,Healthcare
+NATIONALUM.NS,National Aluminium Co.,Metals & Mining
+NAVA.NS,Nava,Power
+NAVINFLUOR.NS,Navin Fluorine International,Chemicals
+NESTLEIND.NS,Nestle India,Fast Moving Consumer Goods
+NETWEB.NS,Netweb Technologies India,Information Technology
+NEULANDLAB.NS,Neuland Laboratories,Healthcare
+NEWGEN.NS,Newgen Software Technologies,Information Technology
+NAM-INDIA.NS,Nippon Life India Asset Management,Financial Services
+NIVABUPA.NS,Niva Bupa Health Insurance Company,Financial Services
+NUVAMA.NS,Nuvama Wealth Management,Financial Services
+NUVOCO.NS,Nuvoco Vistas Corporation,Construction Materials
+OBEROIRLTY.NS,Oberoi Realty,Realty
+ONGC.NS,Oil & Natural Gas Corporation,Oil Gas & Consumable Fuels
+OIL.NS,Oil India,Oil Gas & Consumable Fuels
+OLAELEC.NS,Ola Electric Mobility,Automobile and Auto Components
+OLECTRA.NS,Olectra Greentech,Automobile and Auto Components
+PAYTM.NS,One 97 Communications,Financial Services
+ONESOURCE.NS,Onesource Specialty Pharma,Healthcare
+OFSS.NS,Oracle Financial Services Software,Information Technology
+POLICYBZR.NS,PB Fintech,Financial Services
+PCBL.NS,PCBL Chemical,Chemicals
+PGEL.NS,PG Electroplast,Consumer Durables
+PIIND.NS,PI Industries,Chemicals
+PNBHOUSING.NS,PNB Housing Finance,Financial Services
+PTCIL.NS,PTC Industries,Capital Goods
+PVRINOX.NS,PVR INOX,Media Entertainment & Publication
+PAGEIND.NS,Page Industries,Textiles
+PARADEEP.NS,Paradeep Phosphates,Chemicals
+PATANJALI.NS,Patanjali Foods,Fast Moving Consumer Goods
+PERSISTENT.NS,Persistent Systems,Information Technology
+PETRONET.NS,Petronet LNG,Oil Gas & Consumable Fuels
+PFIZER.NS,Pfizer,Healthcare
+PHOENIXLTD.NS,Phoenix Mills,Realty
+PWL.NS,Physicswallah,Consumer Services
+PIDILITIND.NS,Pidilite Industries,Chemicals
+PINELABS.NS,Pine Labs,Financial Services
+PIRAMALFIN.NS,Piramal Finance,Financial Services
+PPLPHARMA.NS,Piramal Pharma,Healthcare
+POLYMED.NS,Poly Medicure,Healthcare
+POLYCAB.NS,Polycab India,Capital Goods
+POONAWALLA.NS,Poonawalla Fincorp,Financial Services
+PFC.NS,Power Finance Corporation,Financial Services
+POWERGRID.NS,Power Grid Corporation of India,Power
+PREMIERENE.NS,Premier Energies,Capital Goods
+PRESTIGE.NS,Prestige Estates Projects,Realty
+PNB.NS,Punjab National Bank,Financial Services
+RRKABEL.NS,R R Kabel,Capital Goods
+RBLBANK.NS,RBL Bank,Financial Services
+RECLTD.NS,REC,Financial Services
+RHIM.NS,RHI MAGNESITA INDIA LTD.,Capital Goods
+RITES.NS,RITES,Construction
+RADICO.NS,Radico Khaitan,Fast Moving Consumer Goods
+RVNL.NS,Rail Vikas Nigam,Construction
+RAILTEL.NS,Railtel Corporation Of India,Telecommunication
+RAINBOW.NS,Rainbow Childrens Medicare,Healthcare
+RKFORGE.NS,Ramkrishna Forgings,Automobile and Auto Components
+REDINGTON.NS,Redington,Services
+RELIANCE.NS,Reliance Industries,Oil Gas & Consumable Fuels
+RPOWER.NS,Reliance Power,Power
+SBFC.NS,SBFC Finance,Financial Services
+SBICARD.NS,SBI Cards and Payment Services,Financial Services
+SBILIFE.NS,SBI Life Insurance Company,Financial Services
+SJVN.NS,SJVN,Power
+SRF.NS,SRF,Chemicals
+SAGILITY.NS,Sagility,Information Technology
+SAILIFE.NS,Sai Life Sciences,Healthcare
+SAMMAANCAP.NS,Sammaan Capital,Financial Services
+MOTHERSON.NS,Samvardhana Motherson International,Automobile and Auto Components
+SAPPHIRE.NS,Sapphire Foods India,Consumer Services
+SARDAEN.NS,Sarda Energy and Minerals,Metals & Mining
+SAREGAMA.NS,Saregama India,Media Entertainment & Publication
+SCHAEFFLER.NS,Schaeffler India,Automobile and Auto Components
+SCHNEIDER.NS,Schneider Electric Infrastructure,Capital Goods
+SCI.NS,Shipping Corporation of India,Services
+SHREECEM.NS,Shree Cement,Construction Materials
+SHRIRAMFIN.NS,Shriram Finance,Financial Services
+SHYAMMETL.NS,Shyam Metalics and Energy,Capital Goods
+ENRIN.NS,Siemens Energy India,Capital Goods
+SIEMENS.NS,Siemens,Capital Goods
+SIGNATURE.NS,Signatureglobal (India),Realty
+SOBHA.NS,Sobha,Realty
+SOLARINDS.NS,Solar Industries India,Chemicals
+SONACOMS.NS,Sona BLW Precision Forgings,Automobile and Auto Components
+SONATSOFTW.NS,Sonata Software,Information Technology
+STARHEALTH.NS,Star Health and Allied Insurance Company,Financial Services
+SBIN.NS,State Bank of India,Financial Services
+SAIL.NS,Steel Authority of India,Metals & Mining
+SUMICHEM.NS,Sumitomo Chemical India,Chemicals
+SUNPHARMA.NS,Sun Pharmaceutical Industries,Healthcare
+SUNTV.NS,Sun TV Network,Media Entertainment & Publication
+SUNDARMFIN.NS,Sundaram Finance,Financial Services
+SUPREMEIND.NS,Supreme Industries,Capital Goods
+SPLPETRO.NS,Supreme Petrochem,Chemicals
+SUZLON.NS,Suzlon Energy,Capital Goods
+SWANCORP.NS,Swan Corp,Chemicals
+SWIGGY.NS,Swiggy,Consumer Services
+SYNGENE.NS,Syngene International,Healthcare
+SYRMA.NS,Syrma SGS Technology,Capital Goods
+TBOTEK.NS,TBO Tek,Consumer Services
+TVSMOTOR.NS,TVS Motor Company,Automobile and Auto Components
+TATACAP.NS,Tata Capital,Financial Services
+TATACHEM.NS,Tata Chemicals,Chemicals
+TATACOMM.NS,Tata Communications,Telecommunication
+TCS.NS,Tata Consultancy Services,Information Technology
+TATACONSUM.NS,Tata Consumer Products,Fast Moving Consumer Goods
+TATAELXSI.NS,Tata Elxsi,Information Technology
+TATAINVEST.NS,Tata Investment Corporation,Financial Services
+TMCV.NS,Tata Motors,Capital Goods
+TMPV.NS,Tata Motors Passenger Vehicles,Automobile and Auto Components
+TATAPOWER.NS,Tata Power Co.,Power
+TATASTEEL.NS,Tata Steel,Metals & Mining
+TATATECH.NS,Tata Technologies,Information Technology
+TTML.NS,Tata Teleservices (Maharashtra),Telecommunication
+TECHM.NS,Tech Mahindra,Information Technology
+TECHNOE.NS,Techno Electric & Engineering Company,Construction
+TEGA.NS,Tega Industries,Capital Goods
+TEJASNET.NS,Tejas Networks,Telecommunication
+TENNIND.NS,Tenneco Clean Air India,Automobile and Auto Components
+NIACL.NS,The New India Assurance Company,Financial Services
+RAMCOCEM.NS,The Ramco Cements,Construction Materials
+THERMAX.NS,Thermax,Capital Goods
+TIMKEN.NS,Timken India,Capital Goods
+TITAGARH.NS,Titagarh Rail Systems,Capital Goods
+TITAN.NS,Titan Company,Consumer Durables
+TORNTPHARM.NS,Torrent Pharmaceuticals,Healthcare
+TORNTPOWER.NS,Torrent Power,Power
+TARIL.NS,Transformers And Rectifiers (India),Capital Goods
+TRAVELFOOD.NS,Travel Food Services,Consumer Services
+TRENT.NS,Trent,Consumer Services
+TRIDENT.NS,Trident,Textiles
+TRITURBINE.NS,Triveni Turbine,Capital Goods
+TIINDIA.NS,Tube Investments of India,Automobile and Auto Components
+UCOBANK.NS,UCO Bank,Financial Services
+UNOMINDA.NS,UNO Minda,Automobile and Auto Components
+UPL.NS,UPL,Chemicals
+UTIAMC.NS,UTI Asset Management Company,Financial Services
+ULTRACEMCO.NS,UltraTech Cement,Construction Materials
+UNIONBANK.NS,Union Bank of India,Financial Services
+UBL.NS,United Breweries,Fast Moving Consumer Goods
+UNITDSPR.NS,United Spirits,Fast Moving Consumer Goods
+URBANCO.NS,Urban Company,Consumer Services
+USHAMART.NS,Usha Martin,Capital Goods
+VTL.NS,Vardhman Textiles,Textiles
+VBL.NS,Varun Beverages,Fast Moving Consumer Goods
+VEDL.NS,Vedanta,Metals & Mining
+VIJAYA.NS,Vijaya Diagnostic Centre,Healthcare
+VMM.NS,Vishal Mega Mart,Consumer Services
+IDEA.NS,Vodafone Idea,Telecommunication
+VOLTAS.NS,Voltas,Consumer Durables
+WAAREEENER.NS,Waaree Energies,Capital Goods
+WELCORP.NS,Welspun Corp,Capital Goods
+WELSPUNLIV.NS,Welspun Living,Textiles
+WHIRLPOOL.NS,Whirlpool of India,Consumer Durables
+WIPRO.NS,Wipro,Information Technology
+WOCKPHARMA.NS,Wockhardt,Healthcare
+YESBANK.NS,Yes Bank,Financial Services
+ZFCVINDIA.NS,ZF Commercial Vehicle Control Systems India,Automobile and Auto Components
+ZEEL.NS,Zee Entertainment Enterprises,Media Entertainment & Publication
+ZENTEC.NS,Zen Technologies,Capital Goods
+ZENSARTECH.NS,Zensar Technolgies,Information Technology
+ZYDUSLIFE.NS,Zydus Lifesciences,Healthcare
+ZYDUSWELL.NS,Zydus Wellness,Fast Moving Consumer Goods
+ECLERX.NS,eClerx Services,Services
