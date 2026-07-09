@@ -121,6 +121,9 @@ integrated by the main agent between rounds.
 ### Round 3 — UI + Learning  [STATUS: ✅ COMPLETE — verified 170 passed]
 - **Learning (Wave 7, LEARN-01..04)** ✅ `modules/learning.py` (`LearningStats`, `analyze_trades/analyze_journal`), `agents/learning_agent.py` (`LearningAgent.analyze` → `LearningReport`, `LearningRecommendation`; min 50 trades gate → 'insufficient_data'; backtest before/after; `auto_apply=False`), 17 tests.
 - **Dashboard (Wave 5, UI-01..07 + LEARN-05)** ✅ `app.py` (Streamlit, 4 tabs; pure testable data fns `load_scan_output`/`scan_candidates_df`/`filter_candidates`/`reasoning_df`/`open_positions_df`/`closed_trades_df`/`journal_summary`/`learning_view`; approve/reject placeholder). Imports with NO side effects. 18 tests. Run: `streamlit run app.py`.
+### Round 3 — UI + Learning  [STATUS: ✅ COMPLETE]
+- **Learning (Wave 7, LEARN-01..05)** ✅ `modules/learning.py` (pure closed-trade outcome analytics: headline stats + per-pattern/per-sector breakdowns; expectancy/pct conventions documented) and `agents/learning_agent.py` (`LearningAgent.analyze(journal)` → backtest-validated, human-approved config recommendations; `auto_apply` always False; min-closed-trades gate; backtest imported lazily). No dedicated `test_learning.py`; the learning path is exercised indirectly via `tests/test_dashboard.py` (`learning_view`). **Follow-up for Wave 8: add direct unit tests for `modules/learning.py` and `agents/learning_agent.py`.**
+- **Dashboard (Wave 5, UI-01..07)** ✅ `app.py` (streamlit). Import-safe (no `st.*` at import; pure data-shaping functions unit-testable). Tabs: Scanner Output (metrics, filters, funnel chart), Agent Reasoning, Trade Journal (open/closed + summary + PnL chart), Learning Insights (approve/reject placeholders, no auto-apply). 18 tests in `tests/test_dashboard.py`.
 
 ### Round 4 — Full-system QA (Wave 8, QA-01..06)  [STATUS: ✅ COMPLETE — verified 178 passed]
 - **CLI wiring (ALERT-03)** ✅ `run_scanner.py` gained `--pipeline` (scanner→research→risk, persists) and `--monitor` (execution monitor once, dry-run alerts); functions `pipeline_scan`, `monitor_once` are injection-testable.
@@ -151,6 +154,8 @@ Missing per audit → to build:
 - [x] `tests/test_integration.py`, `tests/test_cli.py` (Round 4) ✅
 - [x] `docs/PRD_FEATURE_MATRIX.md`, `docs/DASHBOARD_CHECKLIST.md`, `docs/FINAL_STATUS.md` (Round 4) ✅
 - [x] tests for every module above ✅ (14 test files, 178 tests)
+- [x] `tests/test_dashboard.py`    (Round 3) ✅ (18 tests; covers app + learning path)
+- [ ] direct tests for `modules/learning.py` / `agents/learning_agent.py` (deferred to Wave 8)
 
 ---
 
