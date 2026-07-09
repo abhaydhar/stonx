@@ -18,6 +18,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Dict, Iterable, List, Optional
 
+from modules.candles import CandlePatternDetector, CandlePatternResult
 from modules.fundamental import FundamentalFilter
 from modules.ingest import DataIngestion, normalize_nse_symbol
 from modules.patterns import PatternDetector, PatternResult
@@ -95,6 +96,17 @@ def build_pattern_detector_from_config(config: object) -> PatternDetector:
         volume_spike_multiplier=_cfg(config, "VOLUME_SPIKE_MULTIPLIER", 1.5),
         atr_compression_ratio=_cfg(config, "ATR_COMPRESSION_RATIO", 0.70),
         breakout_hold_bars=_cfg(config, "BREAKOUT_HOLD_BARS", 2),
+        stage_two_ma_period=_cfg(config, "STAGE_TWO_MA_PERIOD", 150),
+        stage_two_high_lookback_days=_cfg(config, "STAGE_TWO_HIGH_LOOKBACK_DAYS", 250),
+        stage_two_max_pct_below_high=_cfg(config, "STAGE_TWO_MAX_PCT_BELOW_HIGH", 0.25),
+    )
+
+
+def build_candle_detector_from_config(config: object) -> CandlePatternDetector:
+    return CandlePatternDetector(
+        doji_body_ratio=_cfg(config, "CANDLE_DOJI_BODY_RATIO", 0.10),
+        shadow_ratio=_cfg(config, "CANDLE_SHADOW_RATIO", 2.0),
+        small_body_ratio=_cfg(config, "CANDLE_SMALL_BODY_RATIO", 0.30),
     )
 
 
@@ -155,6 +167,9 @@ class ScannerCandidate:
     market_regime: str
     risk_status: str = "approved"
     rationale: str = ""
+    stage_two_confirmed: Optional[bool] = None
+    candle_pattern: Optional[str] = None
+    candle_pattern_confidence: Optional[float] = None
 
 
 @dataclass
@@ -197,12 +212,14 @@ class DeterministicScanner:
         fundamentals: Optional[FundamentalFilter] = None,
         pattern_detector: Optional[PatternDetector] = None,
         volume_profiler: Optional[VolumeProfiler] = None,
+        candle_detector: Optional[CandlePatternDetector] = None,
     ):
         self.config = config or load_scanner_config()
         self.ingestion = ingestion or build_ingestion_from_config(self.config)
         self.fundamentals = fundamentals or build_fundamental_filter_from_config(self.config)
         self.pattern_detector = pattern_detector or build_pattern_detector_from_config(self.config)
         self.volume_profiler = volume_profiler or build_volume_profiler_from_config(self.config)
+        self.candle_detector = candle_detector or build_candle_detector_from_config(self.config)
 
     def run(
         self,
@@ -221,10 +238,12 @@ class DeterministicScanner:
             is_bull_market=regime.is_bull_market,
         )
 
+        require_stage_two = bool(_cfg(self.config, "REQUIRE_STAGE_TWO", False))
         counts = {
             "universe_total": len(normalized_symbols),
             "passed_fundamental": 0,
             "data_loaded": 0,
+            "passed_stage_two": 0,
             "passed_pattern": 0,
             "passed_volume": 0,
             "risk_evaluated": 0,
@@ -269,6 +288,21 @@ class DeterministicScanner:
             counts["data_loaded"] += 1
 
             pattern_scan = self.pattern_detector.scan(fetched.symbol, fetched.data)
+            stage_two = pattern_scan.stage_two
+            stage_two_ok = bool(stage_two and stage_two.detected)
+            if stage_two_ok:
+                counts["passed_stage_two"] += 1
+            if require_stage_two and not stage_two_ok:
+                rejected.append(
+                    RejectedSetup(
+                        symbol=fetched.symbol,
+                        stage="stage_two",
+                        reason=stage_two.notes if stage_two else "stage-two trend check unavailable",
+                        sector=sector,
+                    )
+                )
+                continue
+
             best_pattern = self._best_detected_pattern(pattern_scan.patterns)
             if not pattern_scan.passed or best_pattern is None:
                 rejected.append(
@@ -313,12 +347,15 @@ class DeterministicScanner:
                 sector=sector,
             )
             risk_setups.append(setup)
+            candle_pattern = self._best_detected_candle(fetched.symbol, fetched.data)
             contexts[fetched.symbol] = {
                 "fundamental": fundamental,
                 "pattern": best_pattern,
                 "profile": profile,
                 "setup": setup,
                 "sector": sector,
+                "stage_two": stage_two,
+                "candle_pattern": candle_pattern,
             }
 
         risk_results = risk_manager.validate_batch(risk_setups, portfolio)
@@ -443,6 +480,21 @@ class DeterministicScanner:
             return None
         return max(detected, key=lambda pattern: pattern.confidence)
 
+    def _best_detected_candle(
+        self,
+        symbol: str,
+        df: Any,
+    ) -> Optional[CandlePatternResult]:
+        try:
+            candle_scan = self.candle_detector.scan(symbol, df)
+        except Exception as exc:
+            logger.debug("[scanner] candle pattern scan failed for %s: %s", symbol, exc)
+            return None
+        detected = [pattern for pattern in candle_scan.patterns if pattern.detected]
+        if not detected:
+            return None
+        return max(detected, key=lambda pattern: pattern.confidence)
+
     def _select_target(
         self,
         entry: float,
@@ -469,6 +521,8 @@ class DeterministicScanner:
     ) -> ScannerCandidate:
         pattern = context["pattern"]
         setup = context["setup"]
+        stage_two = context.get("stage_two")
+        candle_pattern = context.get("candle_pattern")
         return ScannerCandidate(
             rank=0,
             symbol=risk_result.symbol,
@@ -484,6 +538,9 @@ class DeterministicScanner:
             capital_at_risk_pct=risk_result.capital_at_risk_pct,
             sector=context["sector"],
             market_regime=market_regime,
+            stage_two_confirmed=bool(stage_two and stage_two.detected) if stage_two else None,
+            candle_pattern=candle_pattern.pattern_name if candle_pattern else None,
+            candle_pattern_confidence=candle_pattern.confidence if candle_pattern else None,
             rationale=(
                 f"{pattern.pattern_name} with R:R {risk_result.rr_ratio:.2f}x "
                 f"and {context['sector']} sector exposure within limits."
@@ -543,6 +600,9 @@ def write_scan_outputs(
         "market_regime",
         "risk_status",
         "rationale",
+        "stage_two_confirmed",
+        "candle_pattern",
+        "candle_pattern_confidence",
     ]
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)

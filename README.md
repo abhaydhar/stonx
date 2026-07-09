@@ -21,6 +21,14 @@ dependencies installed.
 - **Pattern detection** — consolidation-after-uptrend breakouts, higher-lows,
   and range-tightening (volatility compression), with a false-breakout 2-bar
   hold rule.
+- **Stage-two trend gate** — a Weinstein-style check (price near its 250-day
+  high, above a rising 150-day MA). Reported on every candidate; set
+  `REQUIRE_STAGE_TWO=true` to reject stocks that fail it before pattern
+  detection instead of just annotating them.
+- **Candlestick patterns** — 11 pure pandas/numpy detectors (doji, hammer/
+  hanging-man, inverted-hammer/shooting-star, bullish/bearish engulfing,
+  morning/evening star, three white soldiers/black crows), attached to each
+  approved candidate as an informational `candle_pattern` annotation.
 - **Volume profile** — High Volume Nodes (HVN → stop anchors) and Low Volume
   Nodes (LVN → targets) computed from price-bin histograms.
 - **Risk & position sizing** — regime-adjusted minimum R:R (bull 2.5x / bear
@@ -52,7 +60,8 @@ config.py                 Pydantic-settings configuration (env-driven)
 modules/                  Deterministic, LLM-free core (pure + unit-tested)
   ingest.py               OHLCV providers, CSV/live-NSE-index universe loader, data-quality metadata
   fundamental.py          Market cap / growth / debt / promoter-holding screen
-  patterns.py             Breakout / higher-lows / range-tightening detection
+  patterns.py             Breakout / higher-lows / range-tightening detection, stage-two trend gate
+  candles.py              Candlestick pattern detection (doji, hammer, engulfing, star, etc.)
   volume.py               Volume profile (HVN support / LVN targets)
   risk.py                 R:R gate, fixed-fractional sizing, portfolio heat, sectors
   scanner.py              DeterministicScanner funnel + JSON/CSV output
@@ -181,6 +190,11 @@ overridden via `.env` — see `.env.example` for the full list. Highlights:
   occasionally change or rate-limit, so treat this as best-effort.
 - **Technical / volume**: consolidation, uptrend, volume-spike, and
   volume-profile parameters.
+- **Stage-two trend gate**: `REQUIRE_STAGE_TWO` (default off — informational
+  only), `STAGE_TWO_MA_PERIOD`, `STAGE_TWO_HIGH_LOOKBACK_DAYS`,
+  `STAGE_TWO_MAX_PCT_BELOW_HIGH`.
+- **Candlestick patterns**: `CANDLE_DOJI_BODY_RATIO`, `CANDLE_SHADOW_RATIO`,
+  `CANDLE_SMALL_BODY_RATIO`.
 - **Market regime**: `NIFTY_SMA_PERIOD`, `BULL_MARKET_MIN_RR`,
   `BEAR_MARKET_MIN_RR`.
 - **Agent models**: per-agent Claude model names (`SCANNER_AGENT_MODEL`, etc.).

@@ -282,6 +282,58 @@ class TestPatternDetector:
         assert len(scan.patterns) == 3
         assert isinstance(scan.passed, bool)
 
+    def test_scan_includes_stage_two_gate_separately_from_patterns(self):
+        df = _make_ohlcv(120)
+        scan = self.detector.scan("TEST", df)
+        assert scan.stage_two is not None
+        assert scan.stage_two.pattern_name == "stage_two_trend"
+        assert len(scan.patterns) == 3  # stage_two is not counted as a trade-setup pattern
+
+
+# ---------------------------------------------------------------------------
+# Stage-two trend gate tests
+# ---------------------------------------------------------------------------
+
+def _make_trend_df(n=300, start=500.0, end=1200.0):
+    """Monotonic linear price ramp — rising if end > start, falling otherwise."""
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=n, freq="B")
+    base = np.linspace(start, end, n)
+    df = pd.DataFrame(
+        {
+            "Open": base - 1,
+            "High": base + 2,
+            "Low": base - 2,
+            "Close": base,
+            "Volume": np.ones(n) * 1_000_000,
+        },
+        index=dates,
+    )
+    return df
+
+
+class TestStageTwoTrend:
+    def setup_method(self):
+        self.detector = PatternDetector()
+
+    def test_detected_for_strong_uptrend_near_highs(self):
+        df = _make_trend_df(n=300, start=500.0, end=1200.0)
+        result = self.detector.detect_stage_two("TEST", df)
+        assert result.detected, f"notes: {result.notes}"
+        assert result.ma_rising is True
+        assert result.pct_below_high is not None and result.pct_below_high < 25.0
+
+    def test_not_detected_for_downtrend(self):
+        df = _make_trend_df(n=300, start=1500.0, end=500.0)
+        result = self.detector.detect_stage_two("TEST", df)
+        assert not result.detected
+        assert result.ma_rising is False
+
+    def test_insufficient_data(self):
+        df = _make_ohlcv(120)
+        result = self.detector.detect_stage_two("TEST", df)
+        assert not result.detected
+        assert "insufficient" in result.notes.lower()
+
 
 # ---------------------------------------------------------------------------
 # VolumeProfiler tests
@@ -448,6 +500,8 @@ class FakeFundamentals:
 
 
 class FakePatternDetector:
+    stage_two_detected = False
+
     def scan(self, symbol, df):
         pattern = PatternResult(
             symbol=symbol,
@@ -456,12 +510,23 @@ class FakePatternDetector:
             confidence=0.8,
             entry_price=100.0,
         )
+        stage_two = PatternResult(
+            symbol=symbol,
+            pattern_name="stage_two_trend",
+            detected=self.stage_two_detected,
+            confidence=0.9 if self.stage_two_detected else 0.0,
+        )
         return ScanResult(
             symbol=symbol,
             patterns=[pattern],
             best_pattern=pattern.pattern_name,
             passed=True,
+            stage_two=stage_two,
         )
+
+
+class FakePatternDetectorWithStageTwo(FakePatternDetector):
+    stage_two_detected = True
 
 
 class FakeVolumeProfiler:
@@ -489,13 +554,13 @@ def _scanner_config(**overrides):
 
 
 class TestDeterministicScanner:
-    def _scanner(self, symbols, sectors=None, targets=None, config=None):
+    def _scanner(self, symbols, sectors=None, targets=None, config=None, pattern_detector=None):
         sectors = sectors or {symbol: "Tech" for symbol in symbols}
         return DeterministicScanner(
             config=config or _scanner_config(),
             ingestion=FakeScannerIngestion(symbols, sectors),
             fundamentals=FakeFundamentals(sectors),
-            pattern_detector=FakePatternDetector(),
+            pattern_detector=pattern_detector or FakePatternDetector(),
             volume_profiler=FakeVolumeProfiler(targets),
         )
 
@@ -568,6 +633,50 @@ class TestDeterministicScanner:
         assert bull_risk.validate(
             RiskSetup("TEST", entry_price=100, stop_price=90, target_price=125)
         ).approved
+
+    def test_stage_two_gate_is_informational_by_default(self):
+        scanner = self._scanner(["AAA.NS"], targets={"AAA.NS": 130.0})
+
+        output = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+
+        assert output.funnel_counts["approved"] == 1
+        assert output.funnel_counts["passed_stage_two"] == 0  # FakePatternDetector doesn't confirm it
+        assert output.candidates[0].stage_two_confirmed is False
+
+    def test_require_stage_two_rejects_when_gate_fails(self):
+        config = _scanner_config(REQUIRE_STAGE_TWO=True)
+        scanner = self._scanner(["AAA.NS"], targets={"AAA.NS": 130.0}, config=config)
+
+        output = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+
+        assert output.funnel_counts["approved"] == 0
+        assert output.rejected[0].stage == "stage_two"
+
+    def test_require_stage_two_allows_through_when_gate_passes(self):
+        config = _scanner_config(REQUIRE_STAGE_TWO=True)
+        scanner = self._scanner(
+            ["AAA.NS"],
+            targets={"AAA.NS": 130.0},
+            config=config,
+            pattern_detector=FakePatternDetectorWithStageTwo(),
+        )
+
+        output = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+
+        assert output.funnel_counts["approved"] == 1
+        assert output.funnel_counts["passed_stage_two"] == 1
+        assert output.candidates[0].stage_two_confirmed is True
+
+    def test_candidate_carries_optional_candle_pattern_annotation(self):
+        scanner = self._scanner(["AAA.NS"], targets={"AAA.NS": 130.0})
+
+        output = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+
+        candidate = output.candidates[0]
+        assert hasattr(candidate, "candle_pattern")
+        assert hasattr(candidate, "candle_pattern_confidence")
+        if candidate.candle_pattern is not None:
+            assert isinstance(candidate.candle_pattern_confidence, float)
 
 
 class TestEndToEndPipeline:

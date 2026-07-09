@@ -15,6 +15,11 @@ Detects three breakout patterns on daily OHLCV data:
      Average true range of the last 10 bars < 70 % of the average
      true range of the prior 20 bars — range compression before a
      potential expansion move.
+
+Also provides a Weinstein-style stage-two trend gate (`detect_stage_two`),
+kept separate from the three breakout patterns above: it confirms the
+stock's broader trend context (near its highs, above a rising long-term
+moving average) rather than describing a specific tradeable setup.
 """
 
 import logging
@@ -47,6 +52,9 @@ class PatternResult:
     breakout_hold_bars: Optional[int] = None
     swing_lows: List[float] = field(default_factory=list)
     atr_ratio: Optional[float] = None        # ATR10 / ATR30 (range_tightening)
+    pct_below_high: Optional[float] = None   # distance from N-day high (stage_two_trend)
+    ma_rising: Optional[bool] = None         # long-term MA sloping up (stage_two_trend)
+    price_above_ma_pct: Optional[float] = None  # price vs long-term MA (stage_two_trend)
     notes: str = ""
 
 
@@ -57,6 +65,7 @@ class ScanResult:
     patterns: List[PatternResult]
     best_pattern: Optional[str] = None       # highest-confidence detected pattern
     passed: bool = False                     # at least one pattern detected
+    stage_two: Optional[PatternResult] = None  # trend-context gate, not a trade setup
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +120,10 @@ class PatternDetector:
         volume_spike_multiplier: float = 1.5,
         atr_compression_ratio: float = 0.70,
         breakout_hold_bars: int = 2,
+        stage_two_ma_period: int = 150,
+        stage_two_high_lookback_days: int = 250,
+        stage_two_max_pct_below_high: float = 0.25,
+        stage_two_ma_slope_lookback: int = 20,
     ):
         self.consolidation_days = consolidation_days
         self.consolidation_range_pct = consolidation_range_pct
@@ -119,6 +132,10 @@ class PatternDetector:
         self.volume_spike_multiplier = volume_spike_multiplier
         self.atr_compression_ratio = atr_compression_ratio
         self.breakout_hold_bars = max(1, breakout_hold_bars)
+        self.stage_two_ma_period = stage_two_ma_period
+        self.stage_two_high_lookback_days = stage_two_high_lookback_days
+        self.stage_two_max_pct_below_high = stage_two_max_pct_below_high
+        self.stage_two_ma_slope_lookback = stage_two_ma_slope_lookback
 
     # ------------------------------------------------------------------
     # Pattern 1: Consolidation after uptrend
@@ -355,11 +372,89 @@ class PatternDetector:
         )
 
     # ------------------------------------------------------------------
+    # Stage-two trend gate (Weinstein-style)
+    # ------------------------------------------------------------------
+
+    def detect_stage_two(self, symbol: str, df: pd.DataFrame) -> PatternResult:
+        """
+        Criteria (confirms broader trend health, not a specific trade setup):
+          a) Price is within stage_two_max_pct_below_high of its
+             stage_two_high_lookback_days high.
+          b) Price is above its stage_two_ma_period-day moving average.
+          c) That moving average is higher than it was
+             stage_two_ma_slope_lookback bars ago (rising).
+        """
+        base = PatternResult(
+            symbol=symbol,
+            pattern_name="stage_two_trend",
+            detected=False,
+            confidence=0.0,
+        )
+
+        min_bars = (
+            max(self.stage_two_ma_period, self.stage_two_high_lookback_days)
+            + self.stage_two_ma_slope_lookback
+        )
+        if len(df) < min_bars:
+            base.notes = f"insufficient data ({len(df)} bars, need {min_bars})"
+            return base
+
+        ma = df["Close"].rolling(self.stage_two_ma_period).mean()
+        current_price = float(df["Close"].iloc[-1])
+        current_ma = float(ma.iloc[-1])
+        prior_ma = float(ma.iloc[-1 - self.stage_two_ma_slope_lookback])
+        ma_rising = current_ma > prior_ma
+        price_above_ma_pct = (current_price - current_ma) / current_ma if current_ma else 0.0
+
+        period_high = float(df["High"].iloc[-self.stage_two_high_lookback_days :].max())
+        pct_below_high = (period_high - current_price) / period_high if period_high else 1.0
+
+        base.pct_below_high = round(pct_below_high * 100, 2)
+        base.ma_rising = ma_rising
+        base.price_above_ma_pct = round(price_above_ma_pct * 100, 2)
+
+        if not ma_rising:
+            base.notes = f"{self.stage_two_ma_period}-day MA is not rising"
+            return base
+        if price_above_ma_pct <= 0:
+            base.notes = f"price is {abs(price_above_ma_pct):.1%} below its {self.stage_two_ma_period}-day MA"
+            return base
+        if pct_below_high > self.stage_two_max_pct_below_high:
+            base.notes = (
+                f"price is {pct_below_high:.1%} below its "
+                f"{self.stage_two_high_lookback_days}-day high "
+                f"> allowed {self.stage_two_max_pct_below_high:.1%}"
+            )
+            return base
+
+        confidence = min(
+            1.0,
+            0.5
+            + 0.25 * (1 - pct_below_high / self.stage_two_max_pct_below_high)
+            + 0.25 * min(price_above_ma_pct / 0.10, 1.0),
+        )
+
+        return PatternResult(
+            symbol=symbol,
+            pattern_name="stage_two_trend",
+            detected=True,
+            confidence=round(confidence, 3),
+            entry_price=current_price,
+            pct_below_high=round(pct_below_high * 100, 2),
+            ma_rising=ma_rising,
+            price_above_ma_pct=round(price_above_ma_pct * 100, 2),
+            notes=(
+                f"{pct_below_high:.1%} below {self.stage_two_high_lookback_days}-day high, "
+                f"{price_above_ma_pct:+.1%} vs rising {self.stage_two_ma_period}-day MA"
+            ),
+        )
+
+    # ------------------------------------------------------------------
     # Unified scan
     # ------------------------------------------------------------------
 
     def scan(self, symbol: str, df: pd.DataFrame) -> ScanResult:
-        """Run all three pattern detectors and return aggregated ScanResult."""
+        """Run all three breakout-pattern detectors and return aggregated ScanResult."""
         results = [
             self.detect_consolidation_after_uptrend(symbol, df),
             self.detect_higher_lows(symbol, df),
@@ -374,6 +469,7 @@ class PatternDetector:
             patterns=results,
             best_pattern=best.pattern_name if best else None,
             passed=bool(detected),
+            stage_two=self.detect_stage_two(symbol, df),
         )
 
         logger.info(

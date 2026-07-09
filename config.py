@@ -117,6 +117,57 @@ class ScannerConfig(BaseSettings):
         le=120
     )
 
+    # ==================== Stage-Two Trend Gate ====================
+    REQUIRE_STAGE_TWO: bool = Field(
+        default=False,
+        description=(
+            "If true, reject stocks that fail the Weinstein-style stage-two "
+            "trend gate (near highs, above a rising long-term MA) before "
+            "pattern detection. If false (default), the check still runs and "
+            "is reported on candidates/funnel_counts, but does not reject."
+        )
+    )
+
+    STAGE_TWO_MA_PERIOD: int = Field(
+        default=150,
+        description="Long-term moving average period (days) for the stage-two trend gate",
+        ge=50
+    )
+
+    STAGE_TWO_HIGH_LOOKBACK_DAYS: int = Field(
+        default=250,
+        description="Lookback window (days) for the stage-two high-proximity check",
+        ge=50
+    )
+
+    STAGE_TWO_MAX_PCT_BELOW_HIGH: float = Field(
+        default=0.25,
+        description="Max allowed distance below the stage-two lookback high (25%)",
+        ge=0.0,
+        le=1.0
+    )
+
+    # ==================== Candlestick Patterns ====================
+    CANDLE_DOJI_BODY_RATIO: float = Field(
+        default=0.10,
+        description="Max body size (as a fraction of bar range) to qualify as a doji",
+        ge=0.0,
+        le=0.5
+    )
+
+    CANDLE_SHADOW_RATIO: float = Field(
+        default=2.0,
+        description="Min long-shadow/body ratio for hammer/shooting-star family patterns",
+        ge=1.0
+    )
+
+    CANDLE_SMALL_BODY_RATIO: float = Field(
+        default=0.30,
+        description="Max body size (as a fraction of bar range) counted as a 'small body'",
+        ge=0.0,
+        le=0.6
+    )
+
     # ==================== Volume Profile ====================
     HVN_THRESHOLD: float = Field(
         default=1.5,
