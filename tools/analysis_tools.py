@@ -10,21 +10,27 @@ import logging
 from typing import Optional
 
 from langchain.tools import tool
-import pandas as pd
-import yfinance as yf
 
-from modules.ingest import DataIngestion
 from modules.patterns import PatternDetector
 from modules.volume import VolumeProfiler
 from modules.risk import RiskManager, RiskSetup
+from modules.scanner import (
+    DeterministicScanner,
+    build_ingestion_from_config,
+    build_pattern_detector_from_config,
+    build_risk_manager_from_config,
+    build_volume_profiler_from_config,
+    load_scanner_config,
+)
 
 logger = logging.getLogger(__name__)
 
 # Singletons
-_ingestion = DataIngestion(cache_dir="./data/cache")
-_pattern_detector = PatternDetector()
-_volume_profiler = VolumeProfiler()
-_risk_manager = RiskManager()
+_config = load_scanner_config()
+_ingestion = build_ingestion_from_config(_config)
+_pattern_detector = build_pattern_detector_from_config(_config)
+_volume_profiler = build_volume_profiler_from_config(_config)
+_risk_manager = build_risk_manager_from_config(_config, is_bull_market=True)
 
 
 # ---------------------------------------------------------------------------
@@ -160,13 +166,20 @@ def validate_risk_reward_tool(setup_json: str) -> str:
         return json.dumps({"error": f"Missing/invalid field: {exc}"})
 
     try:
-        result = _risk_manager.validate(setup)
+        regime = str(data.get("market_regime", data.get("regime", "bull"))).lower()
+        manager = build_risk_manager_from_config(
+            _config,
+            is_bull_market=(regime != "bear"),
+        )
+        result = manager.validate(setup)
     except Exception as exc:
         logger.error(f"[validate_risk_reward_tool] {symbol}: {exc}")
         return json.dumps({"symbol": symbol, "error": str(exc)})
 
     return json.dumps({
         "symbol": symbol,
+        "market_regime": regime,
+        "min_rr_required": manager.min_rr,
         "approved": result.approved,
         "rr_ratio": result.rr_ratio,
         "risk_per_share": result.risk_per_share,
@@ -195,34 +208,13 @@ def check_market_regime_tool(dummy_input: str = "") -> str:
     Returns JSON with regime, current Nifty price, and 200-day SMA.
     """
     try:
-        df = _ingestion.fetch_ohlcv("^NSEI", use_cache=True)
-        if df is None or df.empty:
-            # Fallback: try yfinance directly with longer lookback
-            import yfinance as yf
-            from datetime import datetime, timedelta
-            ticker = yf.Ticker("^NSEI")
-            df = ticker.history(
-                start=datetime.now() - timedelta(days=300),
-                end=datetime.now(),
-            )
+        scanner = DeterministicScanner(config=_config, ingestion=_ingestion)
+        regime = scanner.detect_market_regime(use_cache=True)
     except Exception as exc:
         logger.warning(f"[check_market_regime_tool] Nifty fetch error: {exc}")
         return json.dumps({"regime": "unknown", "error": str(exc)})
 
-    if df is None or len(df) < 200:
-        return json.dumps({
-            "regime": "unknown",
-            "reason": f"Insufficient Nifty data ({len(df) if df is not None else 0} bars)",
-        })
-
-    current_price = float(df["Close"].iloc[-1])
-    sma200 = float(df["Close"].rolling(200).mean().iloc[-1])
-    regime = "bull" if current_price > sma200 else "bear"
-
-    return json.dumps({
-        "regime": regime,
-        "nifty_close": round(current_price, 2),
-        "sma_200": round(sma200, 2),
-        "pct_above_sma": round((current_price - sma200) / sma200 * 100, 2),
-        "min_rr_required": 2.5 if regime == "bull" else 3.5,
-    })
+    output = regime.to_dict()
+    if regime.sma is not None:
+        output["sma_200"] = regime.sma
+    return json.dumps(output)

@@ -14,14 +14,18 @@ from datetime import datetime, timedelta
 
 from langchain.tools import tool
 
-from modules.ingest import DataIngestion
-from modules.fundamental import FundamentalFilter
+from modules.scanner import (
+    build_fundamental_filter_from_config,
+    build_ingestion_from_config,
+    load_scanner_config,
+)
 
 logger = logging.getLogger(__name__)
 
 # Singletons re-used across tool calls to preserve cache
-_ingestion = DataIngestion(cache_dir="./data/cache")
-_fundamental = FundamentalFilter()
+_config = load_scanner_config()
+_ingestion = build_ingestion_from_config(_config)
+_fundamental = build_fundamental_filter_from_config(_config)
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +125,10 @@ def screen_fundamentals_tool(symbol: str) -> str:
             "market_cap_cr": round(data.market_cap_cr, 0) if data.market_cap_cr else None,
             "revenue_growth_pct": round(data.revenue_growth_pct, 1) if data.revenue_growth_pct is not None else None,
             "debt_to_equity": round(data.debt_to_equity, 2) if data.debt_to_equity is not None else None,
-            "promoter_holding_pct": round(data.promoter_holding_pct, 1) if data.promoter_holding_pct is not None else None,
+            "promoter_holding_pct": round(data.promoter_holding_pct * 100, 1) if data.promoter_holding_pct is not None else None,
+            "sector": data.sector,
+            "source": data.source,
+            "as_of": data.as_of,
         },
     }
     return json.dumps(output)

@@ -4,7 +4,20 @@
       "Bash(python -c \"from docx import Document; doc = Document\\('StockScanner PRD v1.docx'\\); print\\('\\\\n'.join\\([p.text for p in doc.paragraphs]\\)\\)\")",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(python validate_models.py)"
+      "Bash(python validate_models.py)",
+      "Bash(python -m pip list)",
+      "Bash(python -m pytest -q)",
+      "Bash([ -f \"$RT\" ])",
+      "Bash(/c/Users/asbhat/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe --version)",
+      "Bash(/c/Users/asbhat/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe -m pytest --version)",
+      "Bash(/c/Users/asbhat/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe -m pip list)",
+      "Bash(/c/Users/asbhat/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe -m venv .venv)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --quiet --upgrade pip)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --quiet \"pandas==2.2.0\" \"numpy==1.26.0\" \"pydantic==2.12.5\" \"pydantic-settings==2.10.1\" \"pytest==8.1.1\" \"pytest-mock==3.12.0\" \"python-dotenv==1.2.2\" \"pyarrow\" \"sqlalchemy==2.0.28\" \"requests==2.31.0\" \"beautifulsoup4==4.12.3\" \"structlog==24.1.0\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(mkdir -p /c/Users/asbhat/AppData/Local/Temp/claude/C--abhay-stonx/4593abc4-b555-41a9-95bb-7730b6305fc3/scratchpad/pytest_tmp /c/Users/asbhat/AppData/Local/Temp/claude/C--abhay-stonx/4593abc4-b555-41a9-95bb-7730b6305fc3/scratchpad/pytest_cache)",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q -p no:cacheprovider -o cache_dir=/c/Users/asbhat/AppData/Local/Temp/claude/C--abhay-stonx/4593abc4-b555-41a9-95bb-7730b6305fc3/scratchpad/pytest_cache --basetemp=/c/Users/asbhat/AppData/Local/Temp/claude/C--abhay-stonx/4593abc4-b555-41a9-95bb-7730b6305fc3/scratchpad/pytest_tmp)"
     ]
   }
 }

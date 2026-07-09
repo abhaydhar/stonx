@@ -7,7 +7,9 @@ Tests use synthetic DataFrame fixtures so no yfinance/API calls are made.
 """
 
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -17,8 +19,18 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from modules.patterns import PatternDetector
+from modules.patterns import PatternResult, ScanResult
 from modules.volume import VolumeProfiler
 from modules.risk import RiskManager, RiskSetup, PortfolioState
+from modules.fundamental import FundamentalData, FundamentalFilter, FundamentalResult
+from modules.ingest import DataIngestion, DataQualityMetadata, OHLCVFetchResult
+from modules.scanner import (
+    DeterministicScanner,
+    build_pattern_detector_from_config,
+    build_risk_manager_from_config,
+    build_volume_profiler_from_config,
+    write_scan_outputs,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -58,13 +70,14 @@ def _make_consolidation_breakout_df() -> pd.DataFrame:
     Synthetic data designed to trigger consolidation_after_uptrend:
       - First 60 bars: uptrend (+25%)
       - Next 20 bars: tight consolidation
-      - Last bar: breakout with high volume
+      - Last 2 bars: breakout hold with high volume
     """
     rng = np.random.default_rng(10)
     n_uptrend = 65
     n_consol = 20
+    hold_bars = 2
 
-    dates = pd.date_range(end=pd.Timestamp.today(), periods=n_uptrend + n_consol + 1, freq="B")
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=n_uptrend + n_consol + hold_bars, freq="B")
 
     # Uptrend section
     up_prices = 1000.0 + np.linspace(0, 300, n_uptrend) + rng.normal(0, 3, n_uptrend)
@@ -76,15 +89,15 @@ def _make_consolidation_breakout_df() -> pd.DataFrame:
 
     consol_high = consol_prices.max() + 5  # boundary
 
-    # Breakout bar
-    breakout_price = consol_high + 15  # breaks out above consolidation
+    # Breakout hold bars
+    breakout_prices = np.array([consol_high + 15, consol_high + 20])
 
-    all_close = np.concatenate([up_prices, consol_prices, [breakout_price]])
+    all_close = np.concatenate([up_prices, consol_prices, breakout_prices])
     noise = rng.uniform(3, 10, len(all_close))
 
     volumes = rng.integers(500_000, 2_000_000, len(all_close)).astype(float)
-    # Last bar has 3x average volume
-    volumes[-1] = float(volumes[:-1].mean() * 3.0)
+    # Breakout hold bars have 3x average volume
+    volumes[-2:] = float(volumes[:-2].mean() * 3.0)
 
     df = pd.DataFrame(
         {
@@ -100,6 +113,102 @@ def _make_consolidation_breakout_df() -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Data ingestion and fundamentals
+# ---------------------------------------------------------------------------
+
+class FakeOHLCVProvider:
+    source_name = "fixture"
+    adjusted = True
+
+    def __init__(self, df: pd.DataFrame):
+        self.df = df
+
+    def fetch(self, symbol: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+        return self.df
+
+
+class TestDataAndFundamentals:
+    def test_universe_loader_reads_csv_fixture(self, tmp_path):
+        path = tmp_path / "universe.csv"
+        path.write_text(
+            "symbol,name,sector\nabc,ABC Ltd,Tech\nXYZ.NS,XYZ Ltd,FMCG\n",
+            encoding="utf-8",
+        )
+
+        ingestion = DataIngestion(
+            cache_dir=str(tmp_path / "cache"),
+            universe_path=str(path),
+        )
+
+        assert ingestion.get_nse_universe() == ["ABC.NS", "XYZ.NS"]
+        assert ingestion.get_sector("ABC.NS") == "Tech"
+
+    def test_provider_quality_metadata_records_source_and_missing_pct(self, tmp_path):
+        start = datetime(2026, 1, 5)
+        end = datetime(2026, 1, 9)
+        dates = pd.bdate_range(start=start, end=end)[:4]
+        df = pd.DataFrame(
+            {
+                "Open": [100, 101, 102, 103],
+                "High": [101, 102, 103, 104],
+                "Low": [99, 100, 101, 102],
+                "Close": [100, 101, 102, 103],
+                "Volume": [1_000_000] * 4,
+            },
+            index=dates,
+        )
+
+        ingestion = DataIngestion(
+            cache_dir=str(tmp_path / "cache"),
+            provider=FakeOHLCVProvider(df),
+            max_missing_pct=1.0,
+        )
+        result = ingestion.fetch_ohlcv_with_quality(
+            "abc",
+            start_date=start,
+            end_date=end,
+            use_cache=False,
+        )
+
+        assert result.data is not None
+        assert result.quality.symbol == "ABC.NS"
+        assert result.quality.source == "fixture"
+        assert result.quality.adjusted is True
+        assert result.quality.rows == 4
+        assert result.quality.expected_business_days == 5
+        assert result.quality.missing_data_pct == pytest.approx(0.2)
+
+    def test_fundamentals_read_fixture_csv_and_enforce_promoter_holding(self, tmp_path):
+        path = tmp_path / "fundamentals.csv"
+        path.write_text(
+            "\n".join(
+                [
+                    "symbol,as_of,sector,market_cap_cr,revenue_growth_pct,debt_to_equity,promoter_holding_pct",
+                    "GOOD.NS,2026-03-31,Tech,1000,12,0.2,55",
+                    "BAD.NS,2026-03-31,Tech,1000,12,0.2,20",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        fundamentals = FundamentalFilter(
+            csv_path=str(path),
+            min_market_cap_cr=500,
+            min_revenue_growth=0,
+            max_debt_to_equity=1.0,
+            min_promoter_holding=0.40,
+        )
+
+        good = fundamentals.screen("GOOD.NS")
+        bad = fundamentals.screen("BAD.NS")
+
+        assert good.passed
+        assert good.data.source == "csv:fundamentals.csv"
+        assert good.data.promoter_holding_pct == pytest.approx(0.55)
+        assert not bad.passed
+        assert "promoter_holding" in (bad.rejection_reason or "")
+
+
+# ---------------------------------------------------------------------------
 # PatternDetector tests
 # ---------------------------------------------------------------------------
 
@@ -112,6 +221,19 @@ class TestPatternDetector:
         result = self.detector.detect_consolidation_after_uptrend("TEST", df)
         assert result.detected, f"Expected detection, notes: {result.notes}"
         assert result.confidence > 0
+        assert result.breakout_hold_bars == 2
+
+    def test_false_breakout_rejected_without_two_bar_hold(self):
+        df = _make_consolidation_breakout_df()
+        consolidation_high = df.iloc[-22:-2]["High"].max()
+        df.iloc[-1, df.columns.get_loc("Close")] = consolidation_high - 1
+        df.iloc[-1, df.columns.get_loc("High")] = consolidation_high
+        df.iloc[-1, df.columns.get_loc("Low")] = consolidation_high - 5
+
+        result = self.detector.detect_consolidation_after_uptrend("TEST", df)
+
+        assert not result.detected
+        assert "false breakout" in result.notes
 
     def test_consolidation_not_detected_flat(self):
         df = _make_ohlcv(120, trend="flat")
@@ -283,6 +405,170 @@ class TestRiskManager:
 # ---------------------------------------------------------------------------
 # Integration: patterns → volume → risk
 # ---------------------------------------------------------------------------
+
+class FakeScannerIngestion:
+    def __init__(self, symbols, sectors=None):
+        self.symbols = symbols
+        self.sectors = sectors or {}
+        self.df = _make_ohlcv(90)
+
+    def get_nse_universe(self):
+        return self.symbols
+
+    def get_sector(self, symbol):
+        return self.sectors.get(symbol, "Unknown")
+
+    def fetch_ohlcv_with_quality(self, symbol, *args, **kwargs):
+        quality = DataQualityMetadata(
+            symbol=symbol,
+            source="fixture",
+            adjusted=True,
+            rows=len(self.df),
+            expected_business_days=len(self.df),
+            missing_data_pct=0.0,
+        )
+        return OHLCVFetchResult(symbol=symbol, data=self.df, quality=quality)
+
+
+class FakeFundamentals:
+    def __init__(self, sectors):
+        self.sectors = sectors
+
+    def screen(self, symbol):
+        data = FundamentalData(
+            symbol=symbol,
+            market_cap_cr=1000,
+            revenue_growth_pct=10,
+            debt_to_equity=0.2,
+            promoter_holding_pct=0.55,
+            sector=self.sectors.get(symbol, "Unknown"),
+            source="fixture",
+        )
+        return FundamentalResult(symbol=symbol, passed=True, data=data)
+
+
+class FakePatternDetector:
+    def scan(self, symbol, df):
+        pattern = PatternResult(
+            symbol=symbol,
+            pattern_name="consolidation_after_uptrend",
+            detected=True,
+            confidence=0.8,
+            entry_price=100.0,
+        )
+        return ScanResult(
+            symbol=symbol,
+            patterns=[pattern],
+            best_pattern=pattern.pattern_name,
+            passed=True,
+        )
+
+
+class FakeVolumeProfiler:
+    def __init__(self, targets=None):
+        self.targets = targets or {}
+
+    def analyse(self, symbol, df):
+        profile = SimpleNamespace(current_price=100.0)
+        target = self.targets.get(symbol, 140.0)
+        return profile, 90.0, [target]
+
+
+def _scanner_config(**overrides):
+    defaults = {
+        "CAPITAL": 1_000_000,
+        "RISK_PCT": 0.01,
+        "BULL_MARKET_MIN_RR": 2.5,
+        "BEAR_MARKET_MIN_RR": 3.5,
+        "PORTFOLIO_HEAT_LIMIT": 0.05,
+        "MAX_CONCURRENT_POSITIONS": 10,
+        "SECTOR_CORRELATION_LIMIT": 2,
+    }
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+class TestDeterministicScanner:
+    def _scanner(self, symbols, sectors=None, targets=None, config=None):
+        sectors = sectors or {symbol: "Tech" for symbol in symbols}
+        return DeterministicScanner(
+            config=config or _scanner_config(),
+            ingestion=FakeScannerIngestion(symbols, sectors),
+            fundamentals=FakeFundamentals(sectors),
+            pattern_detector=FakePatternDetector(),
+            volume_profiler=FakeVolumeProfiler(targets),
+        )
+
+    def test_bear_market_uses_higher_min_rr_in_scan_path(self):
+        scanner = self._scanner(["AAA.NS"], targets={"AAA.NS": 130.0})
+
+        bull = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+        bear = scanner.run(symbols=["AAA.NS"], market_regime="bear", use_cache=False)
+
+        assert bull.funnel_counts["approved"] == 1
+        assert bear.funnel_counts["approved"] == 0
+        assert bear.rejected[0].stage == "risk"
+        assert "minimum 3.50" in bear.rejected[0].reason
+
+    def test_scan_path_enforces_sector_limit(self):
+        symbols = ["AAA.NS", "BBB.NS", "CCC.NS"]
+        sectors = {symbol: "Tech" for symbol in symbols}
+        scanner = self._scanner(symbols, sectors=sectors)
+
+        output = scanner.run(symbols=symbols, market_regime="bull", use_cache=False)
+
+        assert output.funnel_counts["approved"] == 2
+        assert any("sector" in rejected.reason for rejected in output.rejected)
+
+    def test_scan_path_enforces_portfolio_heat_limit(self):
+        symbols = ["AAA.NS", "BBB.NS", "CCC.NS"]
+        sectors = {"AAA.NS": "Tech", "BBB.NS": "FMCG", "CCC.NS": "Energy"}
+        scanner = self._scanner(
+            symbols,
+            sectors=sectors,
+            config=_scanner_config(PORTFOLIO_HEAT_LIMIT=0.02, SECTOR_CORRELATION_LIMIT=10),
+        )
+
+        output = scanner.run(symbols=symbols, market_regime="bull", use_cache=False)
+
+        assert output.funnel_counts["approved"] == 2
+        assert any("portfolio heat" in rejected.reason for rejected in output.rejected)
+
+    def test_json_and_csv_outputs_are_written(self, tmp_path):
+        scanner = self._scanner(["AAA.NS"])
+        output = scanner.run(symbols=["AAA.NS"], market_regime="bull", use_cache=False)
+
+        paths = write_scan_outputs(output, tmp_path, basename="scan")
+
+        assert paths["json"].exists()
+        assert paths["csv"].exists()
+        assert '"funnel_counts"' in paths["json"].read_text(encoding="utf-8")
+        csv_text = paths["csv"].read_text(encoding="utf-8")
+        assert "symbol,pattern" in csv_text
+        assert "AAA.NS" in csv_text
+
+    def test_config_overrides_change_module_behavior(self):
+        config = _scanner_config(
+            CONSOLIDATION_RANGE_PCT=0.03,
+            VOLUME_PROFILE_BINS=11,
+            BULL_MARKET_MIN_RR=2.0,
+            BEAR_MARKET_MIN_RR=4.0,
+        )
+
+        detector = build_pattern_detector_from_config(config)
+        profiler = build_volume_profiler_from_config(config)
+        bear_risk = build_risk_manager_from_config(config, is_bull_market=False)
+        bull_risk = build_risk_manager_from_config(config, is_bull_market=True)
+
+        assert detector.consolidation_range_pct == pytest.approx(0.03)
+        assert profiler.n_bins == 11
+        assert not bear_risk.validate(
+            RiskSetup("TEST", entry_price=100, stop_price=90, target_price=135)
+        ).approved
+        assert bull_risk.validate(
+            RiskSetup("TEST", entry_price=100, stop_price=90, target_price=125)
+        ).approved
+
 
 class TestEndToEndPipeline:
     def test_pipeline_no_crash(self):

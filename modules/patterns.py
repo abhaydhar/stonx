@@ -44,6 +44,7 @@ class PatternResult:
     consolidation_range_pct: Optional[float] = None
     uptrend_gain_pct: Optional[float] = None
     volume_spike_ratio: Optional[float] = None
+    breakout_hold_bars: Optional[int] = None
     swing_lows: List[float] = field(default_factory=list)
     atr_ratio: Optional[float] = None        # ATR10 / ATR30 (range_tightening)
     notes: str = ""
@@ -109,6 +110,7 @@ class PatternDetector:
         uptrend_min_gain_pct: float = 0.20,
         volume_spike_multiplier: float = 1.5,
         atr_compression_ratio: float = 0.70,
+        breakout_hold_bars: int = 2,
     ):
         self.consolidation_days = consolidation_days
         self.consolidation_range_pct = consolidation_range_pct
@@ -116,6 +118,7 @@ class PatternDetector:
         self.uptrend_min_gain_pct = uptrend_min_gain_pct
         self.volume_spike_multiplier = volume_spike_multiplier
         self.atr_compression_ratio = atr_compression_ratio
+        self.breakout_hold_bars = max(1, breakout_hold_bars)
 
     # ------------------------------------------------------------------
     # Pattern 1: Consolidation after uptrend
@@ -141,14 +144,15 @@ class PatternDetector:
             confidence=0.0,
         )
 
-        min_bars = self.uptrend_lookback_days + self.consolidation_days + 5
+        hold_bars = self.breakout_hold_bars
+        min_bars = self.uptrend_lookback_days + self.consolidation_days + hold_bars + 5
         if len(df) < min_bars:
             base.notes = f"insufficient data ({len(df)} bars, need {min_bars})"
             return base
 
         # ---- a) Uptrend check ----
-        uptrend_start_idx = -(self.uptrend_lookback_days + self.consolidation_days)
-        uptrend_end_idx = -self.consolidation_days
+        uptrend_start_idx = -(self.uptrend_lookback_days + self.consolidation_days + hold_bars)
+        uptrend_end_idx = -(self.consolidation_days + hold_bars)
         price_start = df["Close"].iloc[uptrend_start_idx]
         price_at_consol_start = df["Close"].iloc[uptrend_end_idx]
         uptrend_gain = (price_at_consol_start - price_start) / price_start
@@ -161,7 +165,7 @@ class PatternDetector:
             return base
 
         # ---- b) Consolidation check ----
-        consol_window = df.iloc[-self.consolidation_days - 1 : -1]  # excludes today
+        consol_window = df.iloc[-self.consolidation_days - hold_bars : -hold_bars]
         consol_high = consol_window["High"].max()
         consol_low = consol_window["Low"].min()
         range_pct = (consol_high - consol_low) / consol_low
@@ -174,22 +178,24 @@ class PatternDetector:
             )
             return base
 
-        # ---- c) Breakout check ----
-        current_close = df["Close"].iloc[-1]
-        if current_close <= consol_high:
+        # ---- c) Breakout hold check ----
+        breakout_window = df.iloc[-hold_bars:]
+        current_close = float(breakout_window["Close"].iloc[-1])
+        if not bool((breakout_window["Close"] > consol_high).all()):
             base.uptrend_gain_pct = uptrend_gain * 100
             base.consolidation_high = consol_high
             base.consolidation_range_pct = range_pct * 100
             base.notes = (
-                f"no breakout: close {current_close:.2f} <= "
+                f"false breakout: require {hold_bars} closes above "
                 f"consol high {consol_high:.2f}"
             )
+            base.breakout_hold_bars = hold_bars
             return base
 
         # ---- d) Volume confirmation ----
-        vol_20d_avg = df["Volume"].iloc[-21:-1].mean()
-        today_vol = df["Volume"].iloc[-1]
-        vol_spike_ratio = today_vol / vol_20d_avg if vol_20d_avg > 0 else 0.0
+        vol_20d_avg = df["Volume"].iloc[-hold_bars - 20 : -hold_bars].mean()
+        breakout_vol = breakout_window["Volume"].max()
+        vol_spike_ratio = breakout_vol / vol_20d_avg if vol_20d_avg > 0 else 0.0
 
         if vol_spike_ratio < self.volume_spike_multiplier:
             base.notes = (
@@ -217,9 +223,11 @@ class PatternDetector:
             consolidation_range_pct=range_pct * 100,
             uptrend_gain_pct=uptrend_gain * 100,
             volume_spike_ratio=round(vol_spike_ratio, 2),
+            breakout_hold_bars=hold_bars,
             notes=(
                 f"uptrend +{uptrend_gain:.1%}, "
                 f"range {range_pct:.1%}, "
+                f"hold {hold_bars} bars, "
                 f"vol {vol_spike_ratio:.1f}x"
             ),
         )
