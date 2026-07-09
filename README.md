@@ -50,7 +50,7 @@ app.py                    Streamlit dashboard
 config.py                 Pydantic-settings configuration (env-driven)
 
 modules/                  Deterministic, LLM-free core (pure + unit-tested)
-  ingest.py               OHLCV providers, CSV universe loader, data-quality metadata
+  ingest.py               OHLCV providers, CSV/live-NSE-index universe loader, data-quality metadata
   fundamental.py          Market cap / growth / debt / promoter-holding screen
   patterns.py             Breakout / higher-lows / range-tightening detection
   volume.py               Volume profile (HVN support / LVN targets)
@@ -170,6 +170,15 @@ overridden via `.env` — see `.env.example` for the full list. Highlights:
   `MAX_CONCURRENT_POSITIONS`.
 - **Fundamental filters**: `MIN_MARKET_CAP_CR`, `MIN_REVENUE_GROWTH`,
   `MAX_DEBT_TO_EQUITY`, `MIN_PROMOTER_HOLDING`.
+- **Universe source**: `NSE_UNIVERSE_INDEX` — leave unset to use the static
+  `data/universe/nse_universe.csv` (offline-friendly, default). Set to
+  `nifty50` / `nifty100` / `nifty200` / `nifty500` / `niftynext50` /
+  `niftymidcap150` / `niftysmallcap250` / `all` to fetch that index's live
+  constituent list from NSE's public archive CSVs instead. The fetched list is
+  cached to `data/universe/live_<index>.csv` for `NSE_UNIVERSE_CACHE_TTL_HOURS`
+  (default 24h); if a live fetch fails, ingestion falls back to that cache
+  (even if stale) and finally to the static CSV. NSE's archive endpoints
+  occasionally change or rate-limit, so treat this as best-effort.
 - **Technical / volume**: consolidation, uptrend, volume-spike, and
   volume-profile parameters.
 - **Market regime**: `NIFTY_SMA_PERIOD`, `BULL_MARKET_MIN_RR`,
