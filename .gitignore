@@ -12,5 +12,8 @@ venv/
 logs/
 data/cache/
 data/fundamentals/
+data/scan_results_*.json
+data/scan_results_*.csv
+data/stonx.db
 
 .vscode/

@@ -196,6 +196,21 @@ class ScannerConfig(BaseSettings):
         description="Anthropic API key for Claude models; required only for agent workflows"
     )
 
+    GEMINI_API_KEY: Optional[str] = Field(
+        default=None,
+        description="Gemini API key, used via its OpenAI-compatible endpoint for Stock Review's LLM reasoning agents"
+    )
+
+    LLM_BASE_URL: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta/openai/",
+        description="OpenAI-compatible base URL for the Stock Review LLM reasoning agents"
+    )
+
+    LLM_MODEL: str = Field(
+        default="gemini-2.5-flash",
+        description="Default model for the Stock Review LLM reasoning agents"
+    )
+
     TELEGRAM_BOT_TOKEN: Optional[str] = Field(
         default=None,
         description="Telegram bot token for alerts"

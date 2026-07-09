@@ -12,11 +12,12 @@ from __future__ import annotations
 import csv
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from modules.fundamental import FundamentalFilter
 from modules.ingest import DataIngestion, normalize_nse_symbol
@@ -201,8 +202,17 @@ class DeterministicScanner:
         market_regime: Optional[str] = None,
         portfolio: Optional[PortfolioState] = None,
         use_cache: bool = True,
+        max_workers: int = 8,
     ) -> ScannerOutput:
-        """Run the full deterministic funnel and return structured output."""
+        """Run the full deterministic funnel and return structured output.
+
+        The fundamental/data/pattern/volume stages are independent per symbol
+        (each is a separate network fetch plus pure computation), so they run
+        concurrently across up to ``max_workers`` threads. The risk gate is
+        stateful (portfolio heat, max positions) and always runs sequentially
+        afterward, in ranked order, so results are deterministic regardless
+        of how the parallel stage completes.
+        """
 
         normalized_symbols = self._resolve_symbols(symbols, limit)
         regime = self.detect_market_regime(market_regime, use_cache=use_cache)
@@ -226,90 +236,36 @@ class DeterministicScanner:
         contexts: Dict[str, Dict[str, Any]] = {}
         risk_setups: List[RiskSetup] = []
 
-        for symbol in normalized_symbols:
-            fundamental = self.fundamentals.screen(symbol)
-            sector = self._sector(symbol, fundamental.data.sector)
-            if not fundamental.passed:
-                rejected.append(
-                    RejectedSetup(
-                        symbol=fundamental.symbol,
-                        stage="fundamental",
-                        reason=fundamental.rejection_reason or "fundamental filter failed",
-                        sector=sector,
+        if normalized_symbols:
+            workers = max(1, min(max_workers, len(normalized_symbols)))
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                results = list(
+                    executor.map(
+                        lambda symbol: self._evaluate_symbol(symbol, regime, use_cache),
+                        normalized_symbols,
                     )
                 )
-                continue
-            counts["passed_fundamental"] += 1
+        else:
+            results = []
 
-            fetched = self.ingestion.fetch_ohlcv_with_quality(
-                symbol,
-                use_cache=use_cache,
-            )
-            data_quality[fetched.symbol] = fetched.quality.to_dict()
-            if fetched.data is None or fetched.data.empty:
-                rejected.append(
-                    RejectedSetup(
-                        symbol=fetched.symbol,
-                        stage="data",
-                        reason=fetched.quality.error or "OHLCV unavailable",
-                        sector=sector,
-                    )
-                )
-                continue
-            counts["data_loaded"] += 1
+        # Stages a symbol clears before hitting the stage it was rejected at
+        # (or all of them, if it produced a risk setup).
+        stage_order = ["fundamental", "data", "pattern", "volume"]
+        count_keys = ["passed_fundamental", "data_loaded", "passed_pattern", "passed_volume"]
 
-            pattern_scan = self.pattern_detector.scan(fetched.symbol, fetched.data)
-            best_pattern = self._best_detected_pattern(pattern_scan.patterns)
-            if not pattern_scan.passed or best_pattern is None:
-                rejected.append(
-                    RejectedSetup(
-                        symbol=fetched.symbol,
-                        stage="pattern",
-                        reason="no technical pattern detected",
-                        sector=sector,
-                    )
-                )
+        for symbol_rejected, quality, setup, context in results:
+            if quality is not None:
+                data_quality[quality[0]] = quality[1]
+            if symbol_rejected is not None:
+                rejected.append(symbol_rejected)
+                cleared = stage_order.index(symbol_rejected.stage)
+                for key in count_keys[:cleared]:
+                    counts[key] += 1
                 continue
-            counts["passed_pattern"] += 1
-
-            profile, hvn_support, lvn_targets = self.volume_profiler.analyse(
-                fetched.symbol,
-                fetched.data,
-            )
-            if profile is None or hvn_support is None or not lvn_targets:
-                rejected.append(
-                    RejectedSetup(
-                        symbol=fetched.symbol,
-                        stage="volume",
-                        reason="missing HVN support or LVN target",
-                        sector=sector,
-                        pattern=best_pattern.pattern_name,
-                    )
-                )
-                continue
-            counts["passed_volume"] += 1
-
-            target = self._select_target(
-                entry=profile.current_price,
-                stop=hvn_support,
-                targets=lvn_targets,
-                min_rr=regime.min_rr_required,
-            )
-            setup = RiskSetup(
-                symbol=fetched.symbol,
-                entry_price=float(profile.current_price),
-                stop_price=float(hvn_support),
-                target_price=float(target),
-                sector=sector,
-            )
+            for key in count_keys:
+                counts[key] += 1
             risk_setups.append(setup)
-            contexts[fetched.symbol] = {
-                "fundamental": fundamental,
-                "pattern": best_pattern,
-                "profile": profile,
-                "setup": setup,
-                "sector": sector,
-            }
+            contexts[setup.symbol] = context
 
         risk_results = risk_manager.validate_batch(risk_setups, portfolio)
         counts["risk_evaluated"] = len(risk_results)
@@ -407,6 +363,94 @@ class DeterministicScanner:
             sma=round(sma, 2),
             pct_above_sma=round((current_price - sma) / sma * 100, 2) if sma else None,
         )
+
+    def _evaluate_symbol(
+        self,
+        symbol: str,
+        regime: MarketRegime,
+        use_cache: bool,
+    ) -> Tuple[
+        Optional[RejectedSetup],
+        Optional[Tuple[str, Dict[str, Any]]],
+        Optional[RiskSetup],
+        Optional[Dict[str, Any]],
+    ]:
+        """Run the fundamental/data/pattern/volume stages for one symbol.
+
+        Safe to call from multiple threads: each symbol only touches its own
+        cache file and returns its own result, so there's no shared state
+        across concurrent calls. Returns (rejection, data_quality_entry,
+        risk_setup, context) with exactly one of (rejection, risk_setup) set.
+        """
+
+        fundamental = self.fundamentals.screen(symbol)
+        sector = self._sector(symbol, fundamental.data.sector)
+        if not fundamental.passed:
+            rejection = RejectedSetup(
+                symbol=fundamental.symbol,
+                stage="fundamental",
+                reason=fundamental.rejection_reason or "fundamental filter failed",
+                sector=sector,
+            )
+            return rejection, None, None, None
+
+        fetched = self.ingestion.fetch_ohlcv_with_quality(symbol, use_cache=use_cache)
+        quality_entry = (fetched.symbol, fetched.quality.to_dict())
+        if fetched.data is None or fetched.data.empty:
+            rejection = RejectedSetup(
+                symbol=fetched.symbol,
+                stage="data",
+                reason=fetched.quality.error or "OHLCV unavailable",
+                sector=sector,
+            )
+            return rejection, quality_entry, None, None
+
+        pattern_scan = self.pattern_detector.scan(fetched.symbol, fetched.data)
+        best_pattern = self._best_detected_pattern(pattern_scan.patterns)
+        if not pattern_scan.passed or best_pattern is None:
+            rejection = RejectedSetup(
+                symbol=fetched.symbol,
+                stage="pattern",
+                reason="no technical pattern detected",
+                sector=sector,
+            )
+            return rejection, quality_entry, None, None
+
+        profile, hvn_support, lvn_targets = self.volume_profiler.analyse(
+            fetched.symbol,
+            fetched.data,
+        )
+        if profile is None or hvn_support is None or not lvn_targets:
+            rejection = RejectedSetup(
+                symbol=fetched.symbol,
+                stage="volume",
+                reason="missing HVN support or LVN target",
+                sector=sector,
+                pattern=best_pattern.pattern_name,
+            )
+            return rejection, quality_entry, None, None
+
+        target = self._select_target(
+            entry=profile.current_price,
+            stop=hvn_support,
+            targets=lvn_targets,
+            min_rr=regime.min_rr_required,
+        )
+        setup = RiskSetup(
+            symbol=fetched.symbol,
+            entry_price=float(profile.current_price),
+            stop_price=float(hvn_support),
+            target_price=float(target),
+            sector=sector,
+        )
+        context = {
+            "fundamental": fundamental,
+            "pattern": best_pattern,
+            "profile": profile,
+            "setup": setup,
+            "sector": sector,
+        }
+        return None, quality_entry, setup, context
 
     def _resolve_symbols(
         self,

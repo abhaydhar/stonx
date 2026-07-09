@@ -132,6 +132,7 @@ def deterministic_scan(
     limit=None,
     market_regime=None,
     output_dir=None,
+    workers=8,
 ):
     """Run the deterministic scanner service and write JSON/CSV outputs."""
     logger.info("=" * 60)
@@ -145,6 +146,7 @@ def deterministic_scan(
         symbols=symbols,
         limit=limit,
         market_regime=market_regime,
+        max_workers=workers,
     )
     paths = write_scan_outputs(output, output_dir or PROJECT_ROOT / "data")
 
@@ -289,6 +291,12 @@ def main():
         "--output-dir",
         help="Directory for deterministic JSON/CSV outputs",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Concurrent worker threads for deterministic scan data fetches (default: 8)",
+    )
     args = parser.parse_args()
 
     if args.deterministic:
@@ -300,6 +308,7 @@ def main():
             limit=args.limit,
             market_regime=args.market_regime,
             output_dir=args.output_dir,
+            workers=args.workers,
         )
         sys.exit(0)
     elif args.dry_run:
