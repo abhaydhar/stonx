@@ -175,6 +175,128 @@ def deterministic_scan(
 
 
 # ---------------------------------------------------------------------------
+# Multi-agent pipeline (scanner -> research -> risk), deterministic, no CrewAI
+# ---------------------------------------------------------------------------
+
+def pipeline_scan(
+    symbols=None,
+    limit=None,
+    market_regime=None,
+    persist=True,
+    pipeline=None,
+):
+    """Run scanner -> research -> risk and persist reasoning to the journal.
+
+    Deterministic and LLM-free by default. `pipeline` is injectable for tests.
+    """
+    logger.info("=" * 60)
+    logger.info("MULTI-AGENT PIPELINE - scanner -> research -> risk")
+    logger.info("=" * 60)
+
+    if pipeline is None:
+        from orchestrator.pipeline import ScanResearchRiskPipeline
+
+        pipeline = ScanResearchRiskPipeline()
+
+    result = pipeline.run(
+        symbols=symbols,
+        limit=limit,
+        market_regime=market_regime,
+        persist=persist,
+    )
+
+    logger.info(
+        "Pipeline run %s: %s candidates -> %s approved",
+        result.run_id,
+        result.counts.get("scanned_candidates", 0),
+        result.counts.get("approved", 0),
+    )
+
+    print("\nAPPROVED SETUPS (after research + risk)\n" + "-" * 40)
+    for decision in result.approved:
+        print(
+            f"{decision.symbol} | {decision.approval_status} | "
+            f"pattern {decision.pattern} | R:R {decision.rr_ratio}x | "
+            f"size x{decision.position_size_multiplier} -> {decision.adjusted_shares} sh | "
+            f"sentiment {decision.sentiment_score}"
+        )
+    if not result.approved:
+        print("No setups approved after adversarial review.")
+    print(f"\nRun ID: {result.run_id}")
+    print(f"Counts: {result.counts}")
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Execution monitoring (ALERT-03): run once, detect stop/target, dry-run alerts
+# ---------------------------------------------------------------------------
+
+def monitor_once(journal=None, price_provider=None, dry_run=True, alert_sender=None):
+    """Run one execution-monitoring pass over open positions.
+
+    All collaborators are injectable for tests. Alerts are dry-run by default
+    (no live message is sent).
+    """
+    logger.info("=" * 60)
+    logger.info("EXECUTION MONITOR - single pass (dry_run=%s)", dry_run)
+    logger.info("=" * 60)
+
+    from agents.execution_agent import ExecutionAgent
+
+    if journal is None:
+        from modules.journal import TradeJournal
+
+        journal = TradeJournal()
+
+    if price_provider is None:
+        price_provider = _LivePriceProvider()
+
+    if alert_sender is None:
+        from tools.alert_tools import AlertSender
+
+        alert_sender = AlertSender(dry_run=dry_run)
+
+    agent = ExecutionAgent(journal, price_provider, alert_sender=alert_sender)
+    status = agent.run_once()
+
+    events = status.get("events", [])
+    logger.info("Execution monitor: %s event(s)", len(events))
+    print("\nEXECUTION EVENTS\n" + "-" * 40)
+    for event in events:
+        payload = event.to_dict() if hasattr(event, "to_dict") else event
+        print(
+            f"{payload['symbol']} | {payload['event_type']} | "
+            f"pnl {payload.get('pnl')} ({payload.get('pnl_percent')}%) | "
+            f"alert_sent={payload.get('alert_sent')}"
+        )
+    if not events:
+        print("No open positions or no events.")
+    print(f"\nSummary: {status.get('summary')}")
+    return status
+
+
+class _LivePriceProvider:
+    """Latest-close price provider backed by DataIngestion (network at runtime)."""
+
+    def __init__(self):
+        self._ingestion = None
+
+    def get_price(self, symbol):
+        try:
+            if self._ingestion is None:
+                from modules.ingest import DataIngestion
+
+                self._ingestion = DataIngestion()
+            df = self._ingestion.fetch_ohlcv(symbol)
+            if df is None or df.empty:
+                return None
+            return float(df["Close"].iloc[-1])
+        except Exception as exc:  # pragma: no cover - network path
+            logger.warning("[monitor] price fetch failed for %s: %s", symbol, exc)
+            return None
+
+
+# ---------------------------------------------------------------------------
 # Full scan via CrewAI
 # ---------------------------------------------------------------------------
 
@@ -272,6 +394,16 @@ def main():
         help="Run deterministic scanner service without LLM",
     )
     parser.add_argument(
+        "--pipeline",
+        action="store_true",
+        help="Run scanner -> research -> risk pipeline (deterministic) and persist reasoning",
+    )
+    parser.add_argument(
+        "--monitor",
+        action="store_true",
+        help="Run one execution-monitoring pass over open positions (dry-run alerts)",
+    )
+    parser.add_argument(
         "--symbols",
         help="Comma-separated symbols for deterministic scan (default: configured universe)",
     )
@@ -291,16 +423,27 @@ def main():
     )
     args = parser.parse_args()
 
+    symbols = None
+    if args.symbols:
+        symbols = [item.strip() for item in args.symbols.split(",") if item.strip()]
+
     if args.deterministic:
-        symbols = None
-        if args.symbols:
-            symbols = [item.strip() for item in args.symbols.split(",") if item.strip()]
         deterministic_scan(
             symbols=symbols,
             limit=args.limit,
             market_regime=args.market_regime,
             output_dir=args.output_dir,
         )
+        sys.exit(0)
+    elif args.pipeline:
+        pipeline_scan(
+            symbols=symbols,
+            limit=args.limit,
+            market_regime=args.market_regime,
+        )
+        sys.exit(0)
+    elif args.monitor:
+        monitor_once(dry_run=True)
         sys.exit(0)
     elif args.dry_run:
         success = dry_run()

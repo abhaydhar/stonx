@@ -1,8 +1,8 @@
 # StockScanner Build Session State
 
-**Last Updated**: 2026-07-08 (Build orchestration session)
-**Build Phase**: Waves 0–1 COMPLETE and verified. Building Waves 2–8 (agents, backtest, journal, dashboard, alerts, learning).
-**Overall Progress**: ~35% of full PRD v2 MVP (deterministic spine done; multi-agent + persistence + UI in progress)
+**Last Updated**: 2026-07-09 (Build orchestration session)
+**Build Phase**: Waves 0–8 all built and verified. Feature-complete MVP; remaining work is live-data/LLM enablement (see Deferred in `docs/FINAL_STATUS.md`).
+**Overall Progress**: PRD v2 MVP feature set implemented. **Full suite: 178 passed** (Python 3.12 venv).
 
 > This file is the single source of truth for resuming on another machine.
 > It is updated continuously as work lands. Read this first, then
@@ -118,12 +118,16 @@ integrated by the main agent between rounds.
 - **Execution + Alerts (Wave 6, EXEC-01..03, ALERT-01..03)** ✅ `agents/execution_agent.py` (`ExecutionAgent(journal, price_provider, alert_sender, one_r_trail)`, `ExecutionEvent`, `DictPriceProvider`), `tools/alert_tools.py` (`AlertFormatter`, `AlertSender(dry_run=True)` — apprise lazy, no live send in dry-run), 23 tests.
 - **Orchestration (ORCH-01..02)** ✅ `orchestrator/pipeline.py` (`ScanResearchRiskPipeline.run()` → scanner→research→risk, persists candidates + agent reasoning to journal; `PipelineResult`, `PipelineDecision`), 3 tests. Legacy `orchestrator/crew.py` (CrewAI) left intact. Made `orchestrator/__init__.py` lazy.
 
-### Round 3 — UI + Learning  [STATUS: IN PROGRESS]
-- **Learning (Wave 7, LEARN-01..05)** → NEW `modules/learning.py`, `agents/learning_agent.py`, tests. Needs journal + backtest. Min 50 closed trades gate; backtest-validated recommendations; human approval.
-- **Dashboard (Wave 5, UI-01..07)** → NEW `app.py` (streamlit) reading journal + scan outputs + reasoning. Tabs: Scanner Output, Agent Reasoning, Trade Journal, Learning Insights.
+### Round 3 — UI + Learning  [STATUS: ✅ COMPLETE — verified 170 passed]
+- **Learning (Wave 7, LEARN-01..04)** ✅ `modules/learning.py` (`LearningStats`, `analyze_trades/analyze_journal`), `agents/learning_agent.py` (`LearningAgent.analyze` → `LearningReport`, `LearningRecommendation`; min 50 trades gate → 'insufficient_data'; backtest before/after; `auto_apply=False`), 17 tests.
+- **Dashboard (Wave 5, UI-01..07 + LEARN-05)** ✅ `app.py` (Streamlit, 4 tabs; pure testable data fns `load_scan_output`/`scan_candidates_df`/`filter_candidates`/`reasoning_df`/`open_positions_df`/`closed_trades_df`/`journal_summary`/`learning_view`; approve/reject placeholder). Imports with NO side effects. 18 tests. Run: `streamlit run app.py`.
 
-### Round 4 — Full-system QA (Wave 8, QA-01..06)  [STATUS: PENDING]
-- Integration tests with mocked externals, CLI smoke tests, PRD feature matrix, final status doc, regression loop.
+### Round 4 — Full-system QA (Wave 8, QA-01..06)  [STATUS: ✅ COMPLETE — verified 178 passed]
+- **CLI wiring (ALERT-03)** ✅ `run_scanner.py` gained `--pipeline` (scanner→research→risk, persists) and `--monitor` (execution monitor once, dry-run alerts); functions `pipeline_scan`, `monitor_once` are injection-testable.
+- **Integration (QA-02)** ✅ `tests/test_integration.py`: end-to-end pipeline→journal→execution→dry-run alert, + real scanner funnel driven by a fake OHLCV provider (no network).
+- **CLI smoke (QA-03)** ✅ `tests/test_cli.py`: flag dispatch + `monitor_once` breach handling.
+- **Docs (QA-01/04/06)** ✅ `docs/PRD_FEATURE_MATRIX.md`, `docs/DASHBOARD_CHECKLIST.md`, `docs/FINAL_STATUS.md`.
+- **Regression (QA-05)** ✅ Full suite 178 passed; all new modules import without crewai/langchain/apprise.
 
 ---
 
@@ -141,10 +145,12 @@ Missing per audit → to build:
 - [x] `agents/execution_agent.py`  (Round 2) ✅
 - [x] `orchestrator/pipeline.py` scanner→research→risk wiring (main) ✅
 - [x] `reports/` backtest artifact ✅
-- [ ] `agents/learning_agent.py`   (Round 3)
-- [ ] `modules/learning.py`        (Round 3)
-- [ ] `app.py`                     (Round 3)
-- [ ] tests for each of the above
+- [x] `agents/learning_agent.py`   (Round 3) ✅
+- [x] `modules/learning.py`        (Round 3) ✅
+- [x] `app.py`                     (Round 3) ✅
+- [x] `tests/test_integration.py`, `tests/test_cli.py` (Round 4) ✅
+- [x] `docs/PRD_FEATURE_MATRIX.md`, `docs/DASHBOARD_CHECKLIST.md`, `docs/FINAL_STATUS.md` (Round 4) ✅
+- [x] tests for every module above ✅ (14 test files, 178 tests)
 
 ---
 
@@ -162,14 +168,20 @@ Missing per audit → to build:
 - Baseline: **31 passed** (test_scanner.py, test_config.py) in venv. ✅
 - Round 1: **71 passed** (+backtest 23, +journal 17). ✅
 - Round 2: **135 passed** (+research 14, +risk 24, +exec/alerts 23, +orchestrator 3). ✅
-- Round 3: _pending_
-- Round 4: _pending_
+- Round 3: **170 passed** (+learning 17, +dashboard 18). ✅
+- Round 4: **178 passed** (+integration 2, +cli 6). ✅ FINAL — full regression green.
 
 ---
 
 ## ▶️ Next action if resuming now
-Round 1 agents (Backtest + Journal) are being/So-far spawned. On resume:
-1. Recreate venv (see Environment Reproduction).
-2. Run canonical pytest — confirm baseline green.
-3. Check which target files exist (see inventory) to see how far Round 1/2/3 got.
-4. Continue the next PENDING round; after each, run full test suite and update the Verification Log + inventory checkboxes here.
+All PRD waves (0–8) are built and the deterministic + mockable-agent suite is green (178 passed). On resume:
+1. Recreate venv (see Environment Reproduction) and run `python -m pytest -q` — expect 178 passed.
+2. Read `docs/FINAL_STATUS.md` for Completed / Partial / Deferred breakdown, and `docs/PRD_FEATURE_MATRIX.md` for the feature→test map.
+3. Try it: `python run_scanner.py --dry-run` (needs network for yfinance), `--deterministic` (writes JSON/CSV to data/), `--pipeline`, `--monitor`; `streamlit run app.py` for the dashboard.
+4. To enable the live/LLM path (Deferred items): `pip install -r requirements.txt` (adds crewai/langchain/nsepy/etc.), set `ANTHROPIC_API_KEY` in `.env`, expand `data/universe/nse_universe.csv`, and implement an NSEpy provider behind the existing `OHLCVProvider` abstraction. Then `python run_scanner.py` (full CrewAI scan).
+
+### Suggested next enhancements (not blocking MVP)
+- Expand universe CSV toward the full NSE list + a real NSEpy/Screener.in data provider.
+- Wire a real web-research source behind `tools/web_tools.WebResearchSource`.
+- Run a real 2020–2025 backtest and commit the report; gate live-readiness on PRD thresholds.
+- Not committed yet — this session left all changes in the working tree (see `git status`).
